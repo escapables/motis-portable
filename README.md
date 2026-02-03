@@ -1,0 +1,260 @@
+<p align="center"><img src="logo.svg" width="196" height="196"></p>
+
+> [!WARNING]
+> ## 🧪 EXPERIMENTAL FORK
+> This is **escapables/motis-test**, an experimental fork of the original [motis-project/motis](https://github.com/motis-project/motis).
+> 
+> **⚠️ Not for production use** — This fork contains experimental features, API changes, and work-in-progress code that may break or change without notice.
+
+> [!TIP]
+> :sparkles: Join the international MOTIS community at [**motis:matrix.org**](https://matrix.to/#/#motis:matrix.org)
+
+---
+
+# What Makes This Fork Different
+
+| Feature | This Fork | Upstream MOTIS |
+|---------|-----------|----------------|
+| **Native C++ API** | ✅ Direct library calls without HTTP | ❌ HTTP API only |
+| **Loopback Independence** | ✅ Works without localhost | ❌ Requires HTTP server |
+| **Tauri Desktop GUI** | 🚧 Experimental (WIP) | ❌ Not available |
+| **USB Portable Bundle** | ✅ Self-contained archive | ❌ Standard install |
+| **Subprocess IPC** | ✅ JSON over stdin/stdout | ❌ Not available |
+
+## Key Additions
+
+### 1. Native C++ API (`native/`)
+Direct library interface that bypasses the HTTP server entirely:
+```cpp
+#include "native/api.h"
+auto* inst = motis::native::init("./data");
+auto routes = motis::native::plan_route(*inst, from, to);
+```
+
+### 2. USB Portable Bundle
+Ready-to-use archive (`motis-transit-usb.tar.gz`) that runs from any USB stick on Linux without installation.
+
+### 3. Experimental Tauri GUI (`gui/`)
+Rust-based desktop application (currently has WSL display issues, works on native Linux/Windows).
+
+### 4. Web Server (`web_server.py`)
+Simple Python HTTP server for browsers when Tauri isn't available.
+
+---
+
+MOTIS stands for **M**odular **O**pen **T**ransportation **I**nformation **S**ystem.
+It is an open-source software platform designed to facilitate
+efficient planning and routing in multi-modal transportation systems.
+Developed to handle *large-scale* transportation data,
+MOTIS integrates various modes of transport -
+such as walking, cycling, sharing mobility (e-scooters, bike sharing, car
+sharing), and public transport -
+to provide optimized routing solutions.
+
+MOTIS currently supports the following input formats:
+
+- (One) **OpenStreetMap `osm.pbf`** file for the street network, addresses, indoor-routing, etc. 
+- (Multiple) **GTFS** (including GTFS Flex and GTFS Fares v2) feeds for static timetables
+- (Multiple) **GTFS-RT** feeds for real-time updates (delays, cancellations, track changes, service alerts)
+- (Multiple) **GBFS** feeds for sharing mobility
+
+*Working on (funded by [NLnet](https://nlnet.nl/project/MOTIS/))*: NeTEx and SIRI
+
+MOTIS provides an easy-to-use **REST API** (JSON via HTTP) with
+an [**OpenAPI specification**](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/motis-project/motis/refs/heads/master/openapi.yaml) ([source](openapi.yaml))
+that allows you to generate clients for your favorite programming language. You may also directly use the pre-generated [JS client](https://www.npmjs.com/package/@motis-project/motis-client). Some more available client libraries are listed [over at Transitous](https://transitous.org/api/).
+
+Also checkout [**Transitous**](https://transitous.org), which operates a MOTIS instance with global coverage (as far as available) at [api.transitous.org](https://api.transitous.org).
+Please make sure to read the [Usage Policy](https://transitous.org/api/) before integrating this endpoint into your app.
+
+# Who This README Is For
+
+- If you want to run MOTIS quickly, use the Quick Start below.
+- If you want to build from source or set up a dev server, jump to Documentation and `docs/dev-setup-server.md`.
+
+# Features
+
+> [!NOTE]  
+> :rocket: MOTIS is optimized for **high performance** with **low memory usage**.
+> 
+> This enables _planet-sized_ deployments on affordable hardware.
+
+MOTIS is a swiss army knife for mobility and comes with all features you need for a next generation mobility platform:
+
+- **routing**: one mode walking, bike, car, sharing mobility / combined modes
+- **geocoding**: multi-language address and stop name completion with fuzzy string matching and resolution to geo coordinates
+- **reverse geocoding**: resolving geo coordinates to the closest address
+- **tile server**: background map tiles
+
+MOTIS uses efficient traffic day bitsets that allows efficient loading of **full year timetables**!
+Loading one year of timetable doesn't take much more RAM than loading one month.
+
+Features can be turned on and off as needed.
+
+# Quick Start (Run the Prebuilt Binary)
+
+This path does not require building from source.
+
+- Create a folder with the following files.
+- Download MOTIS from
+  the [latest release](https://github.com/motis-project/motis/releases) and
+  extract the archive.
+- Download a OpenStreetMap dataset as `osm.pbf` (e.g.
+  from [Geofabrik](https://download.geofabrik.de/)) and place it in the folder
+- Download one or more GTFS datasets and place them in the folder 
+
+```bash
+./motis config my.osm.pbf gtfs.zip  # generates a minimal config.yml
+./motis import                      # preprocesses data
+./motis server                      # starts a HTTP server on port 8080 
+```
+
+This will preprocess the input files and create a `data` folder.
+After that, it will start a server.
+
+**First API Call (Smoke Test)**
+
+```bash
+curl "http://localhost:8080/api/v5/geocode?text=Main%20St"
+```
+
+> [!IMPORTANT]
+> Common pitfalls:
+> - `pkg` requires cloning via SSH with an SSH key without a passphrase.
+> - Timetables must be current; stale GTFS feeds can produce empty results.
+> - `config.yml` is generated by `motis config` in your working directory.
+>
+> Ensure a valid timetable is used. If the timetable is outdated, it will not contain any trips to consider for upcoming dates.
+
+If you want a known-good, tiny dataset, use the Aachen example below.
+
+This script will execute the steps described above for a small dataset for the city of Aachen, Germany:
+
+**Linux / macOS**
+
+```bash
+# set TARGET to linux-arm64, macos-arm64, ... to fit your setup
+# see release list for supported platforms
+TARGET="linux-amd64"
+wget https://github.com/motis-project/motis/releases/latest/download/motis-${TARGET}.tar.bz2
+tar xf motis-${TARGET}.tar.bz2
+wget https://github.com/motis-project/test-data/raw/aachen/aachen.osm.pbf
+wget https://opendata.avv.de/current_GTFS/AVV_GTFS_Masten_mit_SPNV.zip
+./motis config aachen.osm.pbf AVV_GTFS_Masten_mit_SPNV.zip
+./motis import
+./motis server
+```
+
+**Windows**
+
+```pwsh
+Invoke-WebRequest https://github.com/motis-project/motis/releases/latest/download/motis-windows.zip -OutFile motis-windows.zip
+Expand-Archive motis-windows.zip
+Invoke-WebRequest https://github.com/motis-project/test-data/archive/refs/heads/aachen.zip -OutFile aachen.zip
+Expand-Archive aachen.zip
+./motis config aachen.osm.pbf AVV_GTFS_Masten_mit_SPNV.zip
+./motis import
+./motis server
+```
+
+# Where to Go Next
+
+- Build from source: `docs/linux-dev-setup.md`, `docs/windows-dev-setup.md`, `docs/macos-dev-setup.md`
+- Dev server setup (UI + tiles + data): `docs/dev-setup-server.md`
+- Advanced configuration: `docs/setup.md`
+
+# Documentation
+
+## Developer Setup
+
+Build MOTIS from source:
+- [for Linux](docs/linux-dev-setup.md)
+- [for Windows](docs/windows-dev-setup.md)
+- [for macOS](docs/macos-dev-setup.md)
+
+Set up a server using your build:
+- [for Linux](docs/dev-setup-server.md)
+
+MOTIS uses [pkg](https://github.com/motis-project/pkg) for dependency management.
+See its [README](https://github.com/motis-project/pkg/blob/master/README.md) for how to work with it.
+
+## Configuration
+
+- [Advanced Setups](docs/setup.md)
+
+---
+
+# 🧪 Fork-Specific Features
+
+## Native C++ API
+
+This fork includes a direct C++ library interface that bypasses HTTP/loopback:
+
+```cpp
+#include "native/api.h"
+
+// Initialize (no HTTP server started)
+auto* inst = motis::native::init("./data");
+
+// Geocode
+auto places = motis::native::geocode(*inst, "Stockholm Central");
+
+// Route planning
+coord from{59.3293, 18.0686};
+coord to{59.8586, 17.6389};
+auto routes = motis::native::plan_route(*inst, from, to);
+
+// Cleanup
+motis::native::destroy(inst);
+```
+
+See `native/api.h` for full API.
+
+## USB Portable Bundle
+
+Ready-to-run archive for USB sticks (no installation):
+
+```bash
+# Download and extract
+tar -xzf motis-transit-usb.tar.gz
+cd usb-bundle
+
+# Copy your MOTIS data (or create new)
+cp -r /path/to/motis/data ./data/
+
+# Run
+./start.sh
+# Open http://localhost:8080
+```
+
+Bundle includes:
+- Prebuilt `motis-transit` binary
+- Native C++ API headers and static library
+- Launcher script
+- Documentation
+
+## Experimental Tauri GUI
+
+Rust-based desktop application in `gui/`:
+
+```bash
+cd gui/src-tauri
+cargo build --release
+./target/release/motis-gui
+```
+
+Note: Currently has display issues in WSL. Works on native Linux/Windows.
+
+## Web Server (Fallback)
+
+When Tauri isn't available, use the Python web server:
+
+```bash
+python3 web_server.py
+# Open http://localhost:8080 in any browser
+```
+
+---
+
+**Original MOTIS**: [github.com/motis-project/motis](https://github.com/motis-project/motis)  
+**This Fork**: [github.com/escapables/motis-test](https://github.com/escapables/motis-test)

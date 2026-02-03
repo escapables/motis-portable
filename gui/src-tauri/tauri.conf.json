@@ -1,0 +1,32 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "MOTIS Transit",
+  "version": "0.1.0",
+  "identifier": "com.motis.app",
+  "build": {
+    "frontendDist": "./src",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "cp -r ../src ."
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MOTIS Transit Planner",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}
