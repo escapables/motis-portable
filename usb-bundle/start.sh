@@ -2,6 +2,7 @@
 # MOTIS Transit USB Launcher
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${SCRIPT_DIR}/data"
+UI_DIR="${SCRIPT_DIR}/ui"
 
 if [ ! -f "$DATA_DIR/config.yml" ]; then
     echo "ERROR: MOTIS data not found!"
@@ -19,6 +20,7 @@ echo "=================================="
 echo "MOTIS Transit - Starting Server..."
 echo "=================================="
 echo "Data: $DATA_DIR"
+echo "UI: $UI_DIR"
 echo ""
 echo "Once started, open in your browser:"
 echo "  http://localhost:8080"
@@ -26,23 +28,17 @@ echo ""
 echo "Press Ctrl+C to stop"
 echo ""
 
-# MOTIS expects data directory in current working directory
-# or uses default 'data' folder
-export MOTIS_DATA_PATH="$DATA_DIR"
+# Change to script directory
 cd "$SCRIPT_DIR" || exit 1
 
-# Try different invocations
-if ./motis-transit server --help 2>&1 | grep -q "data-path"; then
-    # Newer MOTIS with --data-path flag
-    ./motis-transit server --data-path "$DATA_DIR"
-elif ./motis-transit server --help 2>&1 | grep -q "\-d"; then
-    # MOTIS with -d flag
-    ./motis-transit server -d "$DATA_DIR"
-else
-    # Older MOTIS - expects data/ in current directory
-    # Create symlink if needed
-    if [ ! -d "data" ] && [ -d "$DATA_DIR" ]; then
-        ln -sf "$DATA_DIR" data
-    fi
-    ./motis-transit server
+# Create data symlink for MOTIS
+if [ ! -d "data" ] && [ -d "$DATA_DIR" ]; then
+    ln -sf "$DATA_DIR" data
 fi
+
+# Set web folder environment variable for MOTIS to find UI
+export MOTIS_WEB_FOLDER="$UI_DIR"
+
+# Start MOTIS server
+# The server will serve static files from the web folder
+./motis-transit server

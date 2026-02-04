@@ -13,15 +13,17 @@ QUICK START:
 
 3. Open http://localhost:8080 in your browser
 
-IMPORTANT - ABOUT THE WEB INTERFACE:
-------------------------------------
-MOTIS includes a web UI that needs to be available for the server
-to serve. If you see a blank page or 404 error, the UI files are
-missing.
+WEB INTERFACE:
+--------------
+This bundle includes the full MOTIS web UI in the 'ui/' folder.
+The start.sh script automatically configures the server to use it.
 
-To fix:
-  Option 1: Use MOTIS with built-in UI (download from releases)
-  Option 2: The server API still works - use curl or a custom client:
+If you see a blank page:
+  - Check that the 'ui/' folder exists and has files
+  - Try refreshing the page
+  - Check browser console for errors
+
+The server API also works directly:
     
     curl "http://localhost:8080/api/v1/geocode?text=Central"
     curl "http://localhost:8080/api/v1/plan?fromPlace=59.33,18.06&toPlace=59.86,17.64"
