@@ -7,6 +7,7 @@ This is the focused backlog for the portable IPC-first app.
 - Complete validation of all remaining interactive controls in Svelte UI.
 - Add/fix protocol passthrough for any missing endpoints found during validation.
 - Reduce legacy handler stubs in `protocol.rs` once coverage is confirmed.
+- Disable global Tauri/webview zoom + window scrolling behavior so zoom gestures only affect the map.
 
 ## Priority B
 

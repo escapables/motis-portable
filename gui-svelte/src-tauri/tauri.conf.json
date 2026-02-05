@@ -15,6 +15,7 @@
         "title": "MOTIS Transit Planner",
         "width": 1400,
         "height": 900,
+        "zoomHotkeysEnabled": false,
         "resizable": true,
         "fullscreen": false,
         "center": true,

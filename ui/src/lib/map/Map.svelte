@@ -109,7 +109,7 @@
 	$effect(updateStyle);
 </script>
 
-<div use:createMap bind:this={el} class={className}>
+<div use:createMap bind:this={el} class={className ? `motis-map ${className}` : 'motis-map'}>
 	{#if children}
 		{@render children()}
 	{/if}
