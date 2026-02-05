@@ -1,0 +1,28 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capabilities for MOTIS GUI",
+  "local": true,
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "motis://localhost"
+        },
+        {
+          "url": "motis://*"
+        },
+        {
+          "url": "https://motis.localhost"
+        },
+        {
+          "url": "http://motis.localhost"
+        }
+      ]
+    }
+  ]
+}

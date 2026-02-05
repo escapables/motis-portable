@@ -1,0 +1,13 @@
+{
+  "name": "motis-gui-svelte",
+  "version": "0.1.0",
+  "description": "MOTIS Transit GUI - Svelte Edition",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
