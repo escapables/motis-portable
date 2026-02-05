@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Copy } from '@lucide/svelte';
 	import { t } from '$lib/i18n/translation';
+	import { sanitizeExternalHttpUrl } from '$lib/utils';
 	import type { RentalZoneFeature } from './zone-types';
 
 	let {
@@ -54,6 +55,7 @@
 			})()
 		}))
 	});
+	let providerUrl = $derived(sanitizeExternalHttpUrl(provider.url));
 
 	async function copyDebugInfo() {
 		await navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
@@ -76,10 +78,11 @@
 			{/if}
 		{/if}
 		<div>
-			{t.sharingProvider}: {#if provider.url}
+			{t.sharingProvider}: {#if providerUrl}
 				<a
-					href={provider.url}
+					href={providerUrl}
 					target="_blank"
+					rel="noopener noreferrer"
 					class="text-blue-600 dark:text-blue-300 hover:underline"
 				>
 					{provider.name}

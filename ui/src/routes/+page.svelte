@@ -27,7 +27,14 @@
 	import ItineraryGeoJson from '$lib/map/itineraries/ItineraryGeoJSON.svelte';
 	import maplibregl from 'maplibre-gl';
 	import { browser } from '$app/environment';
-	import { cn, getUrlArray, onClickStop, onClickTrip, pushStateWithQueryString } from '$lib/utils';
+	import {
+		cn,
+		getUrlArray,
+		onClickStop,
+		onClickTrip,
+		pushStateWithQueryString,
+		sanitizeExternalHttpUrl
+	} from '$lib/utils';
 	import Debug from '$lib/Debug.svelte';
 	import Marker from '$lib/map/Marker.svelte';
 	import Popup from '$lib/map/Popup.svelte';
@@ -129,9 +136,8 @@
 	onMount(async () => {
 		initial().then((d) => {
 			if (d.response.headers.has('Link')) {
-				dataAttributionLink = d.response.headers
-					.get('Link')!
-					.replace(/^<(.*)>; rel="license"$/, '$1');
+				const parsedLink = d.response.headers.get('Link')!.replace(/^<(.*)>; rel="license"$/, '$1');
+				dataAttributionLink = sanitizeExternalHttpUrl(parsedLink);
 			}
 			const r = d.data;
 			if (r) {
@@ -856,9 +862,19 @@
 		<div class="maplibregl-ctrl-{isSmallScreen ? 'top-left' : 'bottom-right'}">
 			<div class="maplibregl-ctrl maplibregl-ctrl-attrib">
 				<div class="maplibregl-ctrl-attrib-inner">
-					&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>
+					&copy;
+					<a
+						href="http://www.openstreetmap.org/copyright"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						OpenStreetMap
+					</a>
 					{#if dataAttributionLink}
-						| <a href={dataAttributionLink} target="_blank">{t.timetableSources}</a>
+						|
+						<a href={dataAttributionLink} target="_blank" rel="noopener noreferrer">
+							{t.timetableSources}
+						</a>
 					{/if}
 				</div>
 			</div>

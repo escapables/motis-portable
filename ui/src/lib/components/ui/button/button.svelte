@@ -41,7 +41,7 @@
 </script>
 
 <script lang="ts">
-	import { cn } from "$lib/utils.js";
+	import { cn, sanitizeLinkHref, withNoopenerNoreferrer } from "$lib/utils.js";
 
 	let {
 		class: className,
@@ -49,17 +49,24 @@
 		size = "default",
 		ref = $bindable(null),
 		href = undefined,
+		target = undefined,
+		rel = undefined,
 		type = "button",
 		children,
 		...restProps
 	}: ButtonProps = $props();
+
+	let safeHref = $derived(sanitizeLinkHref(href));
+	let safeRel = $derived(target === "_blank" ? withNoopenerNoreferrer(rel) : rel);
 </script>
 
-{#if href}
+{#if safeHref}
 	<a
 		bind:this={ref}
 		class={cn(buttonVariants({ variant, size }), className)}
-		{href}
+		href={safeHref}
+		{target}
+		rel={safeRel}
 		{...restProps}
 	>
 		{@render children?.()}

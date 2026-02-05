@@ -8,6 +8,7 @@
 	import { Copy, type Icon as IconType } from '@lucide/svelte';
 	import { formFactorAssets, propulsionTypes, returnConstraints } from '$lib/map/rentals/assets';
 	import { t } from '$lib/i18n/translation';
+	import { sanitizeExternalHttpUrl } from '$lib/utils';
 
 	let {
 		provider,
@@ -33,6 +34,8 @@
 			totalVehicleTypes: provider.vehicleTypes.length
 		}
 	});
+	let providerUrl = $derived(sanitizeExternalHttpUrl(provider.url));
+	let stationRentalUrl = $derived(sanitizeExternalHttpUrl(station.rentalUriWeb));
 
 	async function copyDebugInfo() {
 		await navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
@@ -83,10 +86,11 @@
 			<div>{station.address}</div>
 		{/if}
 		<div>
-			{t.sharingProvider}: {#if provider.url}
+			{t.sharingProvider}: {#if providerUrl}
 				<a
-					href={provider.url}
+					href={providerUrl}
 					target="_blank"
+					rel="noopener noreferrer"
 					class="text-blue-600 dark:text-blue-300 hover:underline"
 				>
 					{provider.name}
@@ -148,8 +152,8 @@
 			</tbody>
 		</table>
 	{/if}
-	{#if showActions && station.rentalUriWeb}
-		<Button class="font-bold" variant="outline" href={station.rentalUriWeb} target="_blank">
+	{#if showActions && stationRentalUrl}
+		<Button class="font-bold" variant="outline" href={stationRentalUrl} target="_blank">
 			{t.rent}
 		</Button>
 	{/if}

@@ -16,7 +16,7 @@
 	import Alerts from '$lib/Alerts.svelte';
 	import { getModeName } from '$lib/getModeName';
 	import { language, t } from '$lib/i18n/translation';
-	import { onClickStop, onClickTrip } from '$lib/utils';
+	import { onClickStop, onClickTrip, sanitizeExternalHttpUrl } from '$lib/utils';
 	import { formatDate, formatTime } from './toDateTime';
 	import { getModeLabel } from './map/getModeLabel';
 	const {
@@ -123,6 +123,8 @@
 	)}
 	{@const stepsWithToll = l.steps?.filter((s: StepInstruction) => s.toll)}
 	{@const stepsWithAccessRestriction = l.steps?.filter((s: StepInstruction) => s.accessRestriction)}
+	{@const rentalProviderUrl = sanitizeExternalHttpUrl(l.rental?.url)}
+	{@const rentalActionUrl = sanitizeExternalHttpUrl(l.rental?.rentalUriWeb)}
 
 	<div class="py-12 flex flex-col gap-y-4 text-muted-foreground">
 		<span class="ml-6">
@@ -133,7 +135,13 @@
 		{#if l.rental && l.rental.systemName}
 			<span class="ml-6">
 				{t.sharingProvider}:
-				<a href={l.rental.url} target="_blank" class="hover:underline">{l.rental.systemName}</a>
+				{#if rentalProviderUrl}
+					<a href={rentalProviderUrl} target="_blank" rel="noopener noreferrer" class="hover:underline">
+						{l.rental.systemName}
+					</a>
+				{:else}
+					{l.rental.systemName}
+				{/if}
 			</span>
 		{/if}
 		{#if l.rental?.returnConstraint == 'ROUNDTRIP_STATION'}
@@ -141,9 +149,9 @@
 				{t.roundtripStationReturnConstraint}
 			</span>
 		{/if}
-		{#if l.rental?.rentalUriWeb}
+		{#if rentalActionUrl}
 			<span class="ml-6">
-				<Button class="font-bold" variant="outline" href={l.rental.rentalUriWeb} target="_blank">
+				<Button class="font-bold" variant="outline" href={rentalActionUrl} target="_blank">
 					{t.rent}
 				</Button>
 			</span>
@@ -184,17 +192,20 @@
 {/snippet}
 
 {#snippet productInfo(product: FareProduct)}
+	{@const eligibilityUrl = sanitizeExternalHttpUrl(product.riderCategory?.eligibilityUrl)}
 	{product.name}
 	{new Intl.NumberFormat(language, { style: 'currency', currency: product.currency }).format(
 		product.amount
 	)}
 	{#if product.riderCategory}
 		for
-		{#if product.riderCategory.eligibilityUrl}
+		{#if eligibilityUrl}
 			<a
 				class:italic={product.riderCategory.isDefaultFareCategory}
 				class="underline"
-				href={product.riderCategory.eligibilityUrl}
+				href={eligibilityUrl}
+				target="_blank"
+				rel="noopener noreferrer"
 			>
 				{product.riderCategory.riderCategoryName}
 			</a>

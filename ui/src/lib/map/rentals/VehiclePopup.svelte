@@ -4,6 +4,7 @@
 	import { Copy } from '@lucide/svelte';
 	import { t } from '$lib/i18n/translation';
 	import { formFactorAssets, propulsionTypes, returnConstraints } from './assets';
+	import { sanitizeExternalHttpUrl } from '$lib/utils';
 
 	let {
 		provider,
@@ -29,6 +30,8 @@
 			totalVehicleTypes: provider.vehicleTypes.length
 		}
 	});
+	let providerUrl = $derived(sanitizeExternalHttpUrl(provider.url));
+	let vehicleRentalUrl = $derived(sanitizeExternalHttpUrl(vehicle.rentalUriWeb));
 
 	async function copyDebugInfo() {
 		await navigator.clipboard.writeText(JSON.stringify(debugInfo, null, 2));
@@ -55,10 +58,11 @@
 	</div>
 	<div>
 		{t.sharingProvider}:
-		{#if provider.url}
+		{#if providerUrl}
 			<a
-				href={provider.url}
+				href={providerUrl}
 				target="_blank"
+				rel="noopener noreferrer"
 				class="text-blue-600 dark:text-blue-300 hover:underline"
 			>
 				{provider.name}
@@ -80,8 +84,8 @@
 			<span>{returnConstraint.title}</span>
 		</div>
 	{/if}
-	{#if showActions && vehicle.rentalUriWeb}
-		<Button class="font-bold" variant="outline" href={vehicle.rentalUriWeb} target="_blank">
+	{#if showActions && vehicleRentalUrl}
+		<Button class="font-bold" variant="outline" href={vehicleRentalUrl} target="_blank">
 			{t.rent}
 		</Button>
 	{/if}

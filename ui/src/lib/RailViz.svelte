@@ -95,21 +95,65 @@
 			onClickTrip(metadata.id);
 		}
 	};
+	const formatPopupTime = (time: string, tz: string | undefined) =>
+		formatTime(new Date(time), tz ?? 'UTC');
+
+	const createRealtimeTimeNode = (
+		realtimeTime: string,
+		scheduledTime: string,
+		tz: string | undefined,
+		delay: number
+	) => {
+		const wrapper = document.createDocumentFragment();
+		const realtime = document.createElement('span');
+		realtime.style.color = rgbToHex(getDelayColor(delay, true));
+		realtime.textContent = formatPopupTime(realtimeTime, tz);
+		wrapper.append(realtime);
+		wrapper.append(document.createTextNode(' '));
+		const scheduled = document.createElement('span');
+		if (delay !== 0) {
+			scheduled.className = 'line-through';
+		}
+		scheduled.textContent = formatPopupTime(scheduledTime, tz);
+		wrapper.append(scheduled);
+		return wrapper;
+	};
+
+	const createPopupContent = (trip: MetaData): HTMLElement => {
+		const container = document.createElement('div');
+		const title = document.createElement('strong');
+		title.textContent = trip.displayName ?? 'Trip';
+		container.append(title);
+		container.append(document.createElement('br'));
+
+		if (trip.realtime) {
+			container.append(
+				createRealtimeTimeNode(
+					trip.departure,
+					trip.scheduledDeparture,
+					trip.tz,
+					trip.departureDelay
+				),
+				document.createTextNode(` ${trip.from}`),
+				document.createElement('br'),
+				createRealtimeTimeNode(trip.arrival, trip.scheduledArrival, trip.tz, trip.arrivalDelay),
+				document.createTextNode(` ${trip.to}`)
+			);
+		} else {
+			container.append(
+				document.createTextNode(`${formatPopupTime(trip.departure, trip.tz)} ${trip.from}`),
+				document.createElement('br'),
+				document.createTextNode(`${formatPopupTime(trip.arrival, trip.tz)} ${trip.to}`)
+			);
+		}
+		return container;
+	};
+
 	const updatePopup = (trip: MetaData) => {
 		if (!trip || !map || !hoverCoordinate) return;
 
 		map.getCanvas().style.cursor = 'pointer';
-		const content = trip.realtime
-			? `<strong>${trip.displayName}</strong><br>
-           <span style="color: ${rgbToHex(getDelayColor(trip.departureDelay, true))}">${formatTime(new Date(trip.departure), trip.tz)}</span>
-           <span ${trip.departureDelay != 0 ? 'class="line-through"' : ''}>${formatTime(new Date(trip.scheduledDeparture), trip.tz)}</span> ${trip.from}<br>
-           <span style="color: ${rgbToHex(getDelayColor(trip.arrivalDelay, true))}">${formatTime(new Date(trip.arrival), trip.tz)}</span>
-           <span ${trip.arrivalDelay != 0 ? 'class="line-through"' : ''}>${formatTime(new Date(trip.scheduledArrival), trip.tz)}</span> ${trip.to}`
-			: `<strong>${trip.displayName}</strong><br>
-           ${formatTime(new Date(trip.departure), trip.tz)} ${trip.from}<br>
-           ${formatTime(new Date(trip.arrival), trip.tz)} ${trip.to}`;
-
-		popup.setLngLat(hoverCoordinate).setHTML(content).addTo(map);
+		popup.setLngLat(hoverCoordinate).setDOMContent(createPopupContent(trip)).addTo(map);
 	};
 
 	//ANIMATION

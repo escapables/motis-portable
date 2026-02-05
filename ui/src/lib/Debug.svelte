@@ -200,6 +200,7 @@
 								href="https://www.openstreetmap.org/node/{value}"
 								class="underline bold text-blue-400"
 								target="_blank"
+								rel="noopener noreferrer"
 							>
 								{value}
 							</a>
@@ -208,6 +209,7 @@
 								href="https://www.openstreetmap.org/way/{value}"
 								class="underline bold text-blue-400"
 								target="_blank"
+								rel="noopener noreferrer"
 							>
 								{value}
 							</a>

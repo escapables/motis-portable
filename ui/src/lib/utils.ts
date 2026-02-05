@@ -12,6 +12,51 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+const BLOCKED_LINK_PROTOCOLS = ['javascript:', 'data:', 'vbscript:', 'file:'] as const;
+const ALLOWED_EXTERNAL_PROTOCOLS = ['http:', 'https:'] as const;
+
+export const sanitizeLinkHref = (href: string | null | undefined): string | undefined => {
+	if (!href) {
+		return undefined;
+	}
+	const trimmed = href.trim();
+	if (!trimmed) {
+		return undefined;
+	}
+	// Normalize control chars and whitespace so protocol checks cannot be bypassed.
+	const normalized = trimmed.replace(/[\u0000-\u001F\u007F\s]+/g, '').toLowerCase();
+	if (BLOCKED_LINK_PROTOCOLS.some((prefix) => normalized.startsWith(prefix))) {
+		return undefined;
+	}
+	return trimmed;
+};
+
+export const sanitizeExternalHttpUrl = (href: string | null | undefined): string | undefined => {
+	const safeHref = sanitizeLinkHref(href);
+	if (!safeHref) {
+		return undefined;
+	}
+	try {
+		const parsed = new URL(safeHref);
+		return ALLOWED_EXTERNAL_PROTOCOLS.includes(parsed.protocol as (typeof ALLOWED_EXTERNAL_PROTOCOLS)[number])
+			? parsed.toString()
+			: undefined;
+	} catch {
+		return undefined;
+	}
+};
+
+export const withNoopenerNoreferrer = (rel: string | null | undefined): string => {
+	const existing = (rel ?? '')
+		.split(/\s+/)
+		.map((token) => token.trim())
+		.filter((token) => token.length > 0);
+	const relSet = new Set(existing);
+	relSet.add('noopener');
+	relSet.add('noreferrer');
+	return Array.from(relSet).join(' ');
+};
+
 const urlParams = browser ? new URLSearchParams(window.location.search) : undefined;
 
 export const getUrlArray = (key: string, defaultValue?: string[]): string[] => {
