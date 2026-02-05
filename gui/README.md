@@ -85,8 +85,10 @@ cc_build.flag_if_supported("-static-libstdc++");
 
 ```bash
 cd gui/src-tauri
-cargo build --release
+cargo tauri build
 ```
+
+Note: Use `cargo tauri build` (not `cargo build --release`) to properly embed frontend assets.
 
 ### Fully Static Linux Build (Recommended for USB)
 
@@ -123,7 +125,12 @@ cargo build --release
    - The app will auto-detect the `./data` folder
    - If not found, the config panel opens to set the path
 
-3. **Optional: Custom data location**:
+3. **Debug mode** (shows debug console):
+   ```bash
+   ./motis-gui --debug
+   ```
+
+4. **Optional: Custom data location**:
    - Use the "Data Path Configuration" panel
    - Set absolute path (e.g., `/home/user/motis-data`)
    - Or relative path (e.g., `../../shared-data`)
@@ -144,10 +151,11 @@ cargo build --release
 
 | Command | Parameters | Returns | Description |
 |---------|-----------|---------|-------------|
-| `plan_route_cmd` | `from_lat, from_lon, to_lat, to_lon` | `Vec<Route>` | Plan routes |
+| `plan_route_cmd` | `fromLat, fromLon, toLat, toLon` | `Vec<Route>` | Plan routes |
 | `geocode_cmd` | `query: String` | `Vec<Location>` | Geocode address |
 | `reverse_geocode_cmd` | `lat, lon` | `Option<Location>` | Reverse geocode |
 | `destroy_native` | - | `()` | Cleanup instance |
+| `is_debug_mode` | - | `bool` | Check if --debug flag is set |
 
 ## Data Types
 
@@ -166,8 +174,8 @@ cargo build --release
   mode: String,              // WALK, BUS, TRAM, RAIL, etc.
   from_name: String,
   to_name: String,
-  from_lat, from_lon: f64,
-  to_lat, to_lon: f64,
+  from: { lat: f64, lon: f64 },
+  to: { lat: f64, lon: f64 },
   duration_seconds: i32,
   distance_meters: i32,
   route_short_name?: String,

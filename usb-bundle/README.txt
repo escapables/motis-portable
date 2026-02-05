@@ -9,9 +9,20 @@ QUICK START:
 1. Copy your MOTIS data to the 'data/' folder
    (or run the setup steps below)
 
-2. Run: ./start.sh
+2. Run the native GUI (recommended):
+   ./motis-gui
+   
+   Or use the web interface:
+   ./start.sh
+   Open http://localhost:8080 in your browser
 
-3. Open http://localhost:8080 in your browser
+GUI DEBUG MODE:
+---------------
+To see the debug console in the GUI, run with --debug flag:
+
+    ./motis-gui --debug
+
+This shows technical logs useful for troubleshooting.
 
 WEB INTERFACE:
 --------------

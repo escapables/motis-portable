@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.motis.app",
   "build": {
-    "frontendDist": "./src",
-    "devUrl": "http://localhost:1420",
+    "frontendDist": "src",
+    "devUrl": null,
     "beforeDevCommand": "",
-    "beforeBuildCommand": "cp -r ../src ."
+    "beforeBuildCommand": ""
   },
   "app": {
     "windows": [
@@ -28,5 +28,6 @@
   },
   "bundle": {
     "active": false
-  }
+  },
+  "plugins": {}
 }

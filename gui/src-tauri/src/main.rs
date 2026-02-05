@@ -2,6 +2,11 @@ pub mod native;
 
 use native::{LocationResult as Location, RouteResult as Route};
 use std::path::PathBuf;
+use std::path::Path;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+// Global debug flag
+static DEBUG_MODE: AtomicBool = AtomicBool::new(false);
 
 fn get_exe_dir() -> Result<PathBuf, String> {
     std::env::current_exe()
@@ -12,18 +17,30 @@ fn get_exe_dir() -> Result<PathBuf, String> {
 }
 
 #[tauri::command]
+async fn get_default_data_path_cmd() -> Result<String, String> {
+    get_exe_dir()
+        .map(|d| d.join("data"))
+        .and_then(|p| p.to_str().map(|s| s.to_string()).ok_or("Invalid path".to_string()))
+}
+
+#[tauri::command]
+async fn check_data_path_exists(path: String) -> Result<bool, String> {
+    Ok(Path::new(&path).exists())
+}
+
+#[tauri::command]
+async fn init_native(data_path: Option<String>) -> Result<String, String> {
+    // This is an alias for init_backend to match frontend expectations
+    init_backend(None, data_path, None).await
+}
+
+#[tauri::command]
 async fn init_backend(
     exe_path: Option<String>,
     data_path: Option<String>,
-    server_url: Option<String>
+    _server_url: Option<String>  // Ignored - USB portable only uses IPC
 ) -> Result<String, String> {
-    // If server URL provided, use server mode
-    if let Some(url) = server_url {
-        native::init_server(&url);
-        return Ok(format!("Server mode: {}", url));
-    }
-    
-    // Otherwise try auto-detection
+    // USB PORTABLE: Always use IPC mode, never server mode
     let exe = exe_path.as_deref().or_else(|| {
         get_exe_dir().ok().map(|d| d.join("motis-ipc"))
             .and_then(|p| p.to_str().map(|s| s.to_string()))
@@ -50,10 +67,12 @@ async fn get_backend_mode() -> Result<String, String> {
 
 #[tauri::command]
 async fn plan_route_cmd(
-    from_lat: f64, from_lon: f64,
-    to_lat: f64, to_lon: f64,
+    #[allow(non_snake_case)] fromLat: f64,
+    #[allow(non_snake_case)] fromLon: f64,
+    #[allow(non_snake_case)] toLat: f64,
+    #[allow(non_snake_case)] toLon: f64,
 ) -> Result<Vec<Route>, String> {
-    native::plan_route(from_lat, from_lon, to_lat, to_lon)
+    native::plan_route(fromLat, fromLon, toLat, toLon)
         .await
         .map_err(|e| e.to_string())
 }
@@ -75,22 +94,40 @@ async fn destroy_backend() {
     native::destroy();
 }
 
+#[tauri::command]
+async fn is_debug_mode() -> bool {
+    DEBUG_MODE.load(Ordering::Relaxed)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             init_backend,
+            init_native,
+            get_default_data_path_cmd,
+            check_data_path_exists,
             get_backend_mode,
             plan_route_cmd,
             geocode_cmd,
             reverse_geocode_cmd,
             destroy_backend,
+            is_debug_mode,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 fn main() {
+    // Parse command line arguments
+    let args: Vec<String> = std::env::args().collect();
+    let debug_mode = args.contains(&"--debug".to_string());
+    DEBUG_MODE.store(debug_mode, Ordering::Relaxed);
+    
+    if debug_mode {
+        eprintln!("[MOTIS-GUI] Debug mode enabled");
+    }
+    
     run();
 }
