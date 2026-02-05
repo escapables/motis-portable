@@ -2,6 +2,7 @@
 	import { Combobox } from 'bits-ui';
 	import { geocode, type LocationType, type Match, type Mode } from '@motis-project/motis-client';
 	import { MapPinHouse as House, MapPin as Place } from '@lucide/svelte';
+	import { LoaderCircle } from '@lucide/svelte';
 	import { parseCoordinatesToLocation, type Location } from './Location';
 	import { language } from './i18n/translation';
 	import maplibregl from 'maplibre-gl';
@@ -29,6 +30,8 @@
 
 	let inputValue = $state('');
 	let match = $state('');
+	let loading = $state(false);
+	let lookupError = $state<string | undefined>(undefined);
 
 	const getDisplayArea = (match: Match | undefined) => {
 		if (match) {
@@ -64,45 +67,60 @@
 	};
 
 	const updateGuesses = async () => {
+		loading = true;
+		lookupError = undefined;
+
 		const coord = parseCoordinatesToLocation(inputValue);
 		if (coord) {
 			selected = coord;
 			items = [];
 			onChange(selected);
+			loading = false;
 			return;
 		}
 
-		const pos = place ? maplibregl.LngLat.convert(place) : undefined;
-		const biasPlace = pos ? { place: `${pos.lat},${pos.lng}` } : {};
-		const { data: matches, error } = await geocode({
-			query: {
-				...biasPlace,
-				text: inputValue,
-				language: [language],
-				mode: transitModes,
-				type
+		try {
+			const pos = place ? maplibregl.LngLat.convert(place) : undefined;
+			const biasPlace = pos ? { place: `${pos.lat},${pos.lng}` } : {};
+			const { data: matches, error } = await geocode({
+				query: {
+					...biasPlace,
+					text: inputValue,
+					language: [language],
+					mode: transitModes,
+					type
+				}
+			});
+			if (error) {
+				const message = (error as { error?: string })?.error ?? 'Search request failed';
+				lookupError = message;
+				items = [];
+				console.error('TYPEAHEAD ERROR: ', error);
+				return;
 			}
-		});
-		if (error) {
-			console.error('TYPEAHEAD ERROR: ', error);
-			return;
+
+			items = matches!.map((match: Match): Location => {
+				return {
+					label: getLabel(match),
+					match
+				};
+			});
+			/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
+			const shown = new Set<string>();
+			items = items.filter((x) => {
+				const entry = x.match?.type + x.label!;
+				if (shown.has(entry)) {
+					return false;
+				}
+				shown.add(entry);
+				return true;
+			});
+		} catch (error) {
+			lookupError = String(error);
+			items = [];
+		} finally {
+			loading = false;
 		}
-		items = matches!.map((match: Match): Location => {
-			return {
-				label: getLabel(match),
-				match
-			};
-		});
-		/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
-		const shown = new Set<string>();
-		items = items.filter((x) => {
-			const entry = x.match?.type + x.label!;
-			if (shown.has(entry)) {
-				return false;
-			}
-			shown.add(entry);
-			return true;
-		});
 	};
 
 	const deserialize = (s: string): Location => {
@@ -129,6 +147,13 @@
 
 	let timer: number;
 	$effect(() => {
+		if (!inputValue) {
+			items = [];
+			lookupError = undefined;
+			loading = false;
+			return;
+		}
+
 		if (inputValue) {
 			clearTimeout(timer);
 			timer = setTimeout(() => {
@@ -163,16 +188,26 @@
 		}
 	}}
 >
-	<Combobox.Input
-		{placeholder}
-		{name}
-		bind:ref
-		class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-		autocomplete="off"
-		oninput={(e: Event) => (inputValue = (e.currentTarget as HTMLInputElement).value)}
-		aria-label={placeholder}
-		data-combobox-input={inputValue}
-	/>
+	<div class="relative">
+		<Combobox.Input
+			{placeholder}
+			{name}
+			bind:ref
+			class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 pr-9 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+			autocomplete="off"
+			oninput={(e: Event) => (inputValue = (e.currentTarget as HTMLInputElement).value)}
+			aria-label={placeholder}
+			data-combobox-input={inputValue}
+		/>
+		{#if loading}
+			<div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-muted-foreground">
+				<LoaderCircle class="h-4 w-4 animate-spin" />
+			</div>
+		{/if}
+	</div>
+	{#if lookupError}
+		<p class="mt-2 text-xs text-destructive">{lookupError}</p>
+	{/if}
 	{#if items.length !== 0}
 		<Combobox.Portal>
 			<Combobox.Content

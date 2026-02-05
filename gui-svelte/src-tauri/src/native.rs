@@ -5,6 +5,8 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use reqwest;
 use std::path::Path;
+#[cfg(unix)]
+use std::io::ErrorKind;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LatLon {
@@ -187,57 +189,57 @@ impl IpcBackend {
     }
 }
 
-/// Try to make a file executable (copy to /tmp if on FAT32)
+/// Copy executable to /tmp and set executable permission.
+#[cfg(unix)]
+fn copy_to_tmp_and_make_executable(exe_path: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let path = Path::new(exe_path);
+
+    let tmp_dir = std::env::temp_dir();
+    let exe_name = path
+        .file_name()
+        .ok_or("Invalid exe path")?
+        .to_str()
+        .ok_or("Invalid exe name")?;
+    let tmp_path = tmp_dir.join(exe_name);
+
+    eprintln!("[MOTIS-GUI] Copying executable to /tmp: {:?}", tmp_path);
+    std::fs::copy(exe_path, &tmp_path)?;
+
+    use std::os::unix::fs::PermissionsExt;
+    let mut perms = std::fs::metadata(&tmp_path)?.permissions();
+    perms.set_mode(0o755);
+    std::fs::set_permissions(&tmp_path, perms)?;
+
+    tmp_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "Invalid tmp path".into())
+}
+
+/// Resolve an executable path suitable for spawn (handles FAT32/non-exec mounts).
 fn ensure_executable(exe_path: &str) -> Result<String, Box<dyn std::error::Error>> {
     let path = Path::new(exe_path);
-    
-    // Check if file exists
+
     if !path.exists() {
         return Err(format!("Executable not found: {}", exe_path).into());
     }
-    
-    // Try to check if it's executable by attempting to run it with --version
-    // This is a lightweight check that works on Unix
+
     #[cfg(unix)]
     {
-        // Check if we can execute it directly
-        match Command::new(exe_path).arg("--version").output() {
-            Ok(_) => return Ok(exe_path.to_string()),
-            Err(e) => {
-                eprintln!("[MOTIS-GUI] Cannot execute directly (permission issue?): {}", e);
-                
-                // Try to copy to /tmp and make executable
-                let tmp_dir = std::env::temp_dir();
-                let exe_name = path.file_name()
-                    .ok_or("Invalid exe path")?
-                    .to_str()
-                    .ok_or("Invalid exe name")?;
-                let tmp_path = tmp_dir.join(exe_name);
-                
-                eprintln!("[MOTIS-GUI] Copying to /tmp: {:?}", tmp_path);
-                
-                // Copy the file
-                std::fs::copy(exe_path, &tmp_path)?;
-                
-                // Make it executable
-                use std::os::unix::fs::PermissionsExt;
-                let mut perms = std::fs::metadata(&tmp_path)?.permissions();
-                perms.set_mode(0o755);
-                std::fs::set_permissions(&tmp_path, perms)?;
-                
-                let tmp_path_str = tmp_path.to_str()
-                    .ok_or("Invalid tmp path")?
-                    .to_string();
-                
-                eprintln!("[MOTIS-GUI] Made executable at: {}", tmp_path_str);
-                return Ok(tmp_path_str);
-            }
+        use std::os::unix::fs::PermissionsExt;
+        let mode = std::fs::metadata(path)?.permissions().mode();
+        if mode & 0o111 != 0 {
+            return Ok(exe_path.to_string());
         }
+        eprintln!(
+            "[MOTIS-GUI] Executable bit missing for {}, using /tmp copy",
+            exe_path
+        );
+        return copy_to_tmp_and_make_executable(exe_path);
     }
-    
+
     #[cfg(not(unix))]
     {
-        // On Windows, just return the original path
         Ok(exe_path.to_string())
     }
 }
@@ -256,13 +258,35 @@ pub fn init_ipc(exe_path: &str, data_path: &str) -> Result<(), Box<dyn std::erro
     let actual_exe_path = ensure_executable(exe_path)?;
     eprintln!("[MOTIS-GUI] Using executable: {}", actual_exe_path);
 
-    let mut child = Command::new(&actual_exe_path)
-        .arg(data_path)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())  // Show motis-ipc's stderr for debugging
-        .spawn()
-        .map_err(|e| format!("Failed to spawn motis-ipc: {}. Path: {}", e, actual_exe_path))?;
+    let spawn = |binary: &str| {
+        Command::new(binary)
+            .arg(data_path)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())  // Show motis-ipc's stderr for debugging
+            .spawn()
+    };
+
+    let mut child = match spawn(&actual_exe_path) {
+        Ok(child) => child,
+        #[cfg(unix)]
+        Err(err) if err.kind() == ErrorKind::PermissionDenied => {
+            eprintln!(
+                "[MOTIS-GUI] Spawn failed due to permission/noexec mount, retrying from /tmp: {}",
+                err
+            );
+            let tmp_exe = copy_to_tmp_and_make_executable(exe_path)?;
+            eprintln!("[MOTIS-GUI] Retrying spawn with executable: {}", tmp_exe);
+            spawn(&tmp_exe).map_err(|e| format!("Failed to spawn motis-ipc from /tmp: {}", e))?
+        }
+        Err(err) => {
+            return Err(format!(
+                "Failed to spawn motis-ipc: {}. Path: {}",
+                err, actual_exe_path
+            )
+            .into())
+        }
+    };
 
     eprintln!("[MOTIS-GUI] Process spawned, PID: {:?}", child.id());
     

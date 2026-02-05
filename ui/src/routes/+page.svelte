@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, Palette, Rss, Ban, LocateFixed, TrainFront } from '@lucide/svelte';
+	import { X, Palette, Rss, Ban, LocateFixed, TrainFront, LoaderCircle, RotateCcw } from '@lucide/svelte';
 	import { getStyle } from '$lib/map/style';
 	import Map from '$lib/map/Map.svelte';
 	import Control from '$lib/map/Control.svelte';
@@ -88,6 +88,8 @@
 	let lastPlanQuery: PlanData | undefined = undefined;
 	let serverConfig: ServerConfig | undefined = $state();
 	let dataLoaded: boolean = $state(false);
+	let initLoading: boolean = $state(true);
+	let initError: string | undefined = $state(undefined);
 
 	$effect(() => {
 		if (activeTab == 'isochrones') {
@@ -133,8 +135,11 @@
 		geolocate.trigger();
 	};
 
-	onMount(async () => {
-		initial().then((d) => {
+	const loadInitialState = async () => {
+		initLoading = true;
+		initError = undefined;
+		try {
+			const d = await initial();
 			if (d.response.headers.has('Link')) {
 				const parsedLink = d.response.headers.get('Link')!.replace(/^<(.*)>; rel="license"$/, '$1');
 				dataAttributionLink = sanitizeExternalHttpUrl(parsedLink);
@@ -145,10 +150,18 @@
 				zoom = r.zoom;
 				serverConfig = r.serverConfig;
 			}
+			await tick();
+			applyPageStateFromURL();
+		} catch (error) {
+			initError = String(error);
+		} finally {
 			dataLoaded = true;
-		});
-		await tick();
-		applyPageStateFromURL();
+			initLoading = false;
+		}
+	};
+
+	onMount(async () => {
+		await loadInitialState();
 	});
 
 	const applyPageStateFromURL = () => {
@@ -633,7 +646,7 @@
 					pushState('', { activeTab: v });
 				}
 			}
-			class="max-w-full w-[520px] overflow-y-auto"
+			class="max-w-full w-full md:w-[520px] overflow-y-auto"
 		>
 			<Tabs.List class="grid grid-cols-3">
 				<Tabs.Trigger value="connections">{t.connections}</Tabs.Trigger>
@@ -712,9 +725,9 @@
 	</Control>
 
 	{#if activeTab == 'connections' && routingResponses.length !== 0 && !page.state.selectedItinerary}
-		<Control class="min-h-0 md:flex md:flex-col md:mb-2} ">
+		<Control class="min-h-0 md:flex md:flex-col md:mb-2">
 			<Card
-				class="scrollable w-[520px] h-full md:h-[70vh] {isSmallScreen
+				class="scrollable w-full md:w-[520px] h-full md:h-[70vh] {isSmallScreen
 					? 'border-0 shadow-none'
 					: ''} overflow-x-hidden bg-background rounded-lg mb-2"
 			>
@@ -758,7 +771,7 @@
 
 	{#if activeTab == 'connections' && page.state.selectedItinerary}
 		<Control class="min-h-0 md:mb-2 md:flex">
-			<Card class="w-[520px] bg-background rounded-lg  flex flex-col mb-2">
+			<Card class="w-full md:w-[520px] bg-background rounded-lg flex flex-col mb-2">
 				<div class="w-full flex justify-between items-center shadow-md pl-1 mb-1">
 					<h2 class="ml-2 text-base font-semibold">{t.journeyDetails}</h2>
 					<Button
@@ -786,7 +799,7 @@
 
 	{#if activeTab == 'departures' && page.state.selectedStop}
 		<Control class="min-h-0 md:mb-2">
-			<Card class="w-[520px] md:max-h-[60vh] h-full bg-background rounded-lg flex flex-col mb-2">
+			<Card class="w-full md:w-[520px] md:max-h-[60vh] h-full bg-background rounded-lg flex flex-col mb-2">
 				<div class="w-full flex justify-between items-center shadow-md pl-1 mb-1">
 					<h2 class="ml-2 text-base font-semibold">
 						{#if page.state.stopArriveBy}
@@ -823,13 +836,39 @@
 
 	{#if activeTab == 'isochrones' && one.match}
 		<Control class="min-h-0 md:mb-2 {isochronesOptions.status == 'DONE' ? 'hide' : ''}">
-			<Card class="w-[520px] overflow-y-auto overflow-x-hidden bg-background rounded-lg">
+			<Card class="w-full md:w-[520px] overflow-y-auto overflow-x-hidden bg-background rounded-lg">
 				<IsochronesInfo options={isochronesOptions} />
 			</Card>
 		</Control>
 	{/if}
 {/snippet}
-{#if dataLoaded}
+
+{#if initLoading}
+	<div class="h-dvh flex items-center justify-center bg-secondary text-foreground">
+		<div class="rounded-lg border bg-background px-6 py-5 flex items-center gap-3 shadow-sm">
+			<LoaderCircle class="h-5 w-5 animate-spin" />
+			<span class="text-sm font-medium">Loading MOTIS data...</span>
+		</div>
+	</div>
+{:else if initError}
+	<div class="h-dvh flex items-center justify-center bg-secondary px-4">
+		<Card class="w-full max-w-xl p-5 flex flex-col gap-3">
+			<h2 class="text-lg font-semibold">Startup failed</h2>
+			<p class="text-sm text-muted-foreground break-words">{initError}</p>
+			<div>
+				<Button
+					class="gap-2"
+					onclick={() => {
+						loadInitialState();
+					}}
+				>
+					<RotateCcw class="h-4 w-4" />
+					Retry
+				</Button>
+			</div>
+		</Card>
+	</div>
+{:else if dataLoaded}
 	<Map
 		bind:map
 		bind:bounds
