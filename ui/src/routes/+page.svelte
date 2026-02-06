@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { X, Palette, Rss, Ban, LocateFixed, TrainFront, LoaderCircle, RotateCcw } from '@lucide/svelte';
+	import {
+		X,
+		Palette,
+		Rss,
+		Ban,
+		LocateFixed,
+		TrainFront,
+		LoaderCircle,
+		RotateCcw
+	} from '@lucide/svelte';
 	import { getStyle } from '$lib/map/style';
 	import Map from '$lib/map/Map.svelte';
 	import Control from '$lib/map/Control.svelte';
@@ -799,7 +808,9 @@
 
 	{#if activeTab == 'departures' && page.state.selectedStop}
 		<Control class="min-h-0 md:mb-2">
-			<Card class="w-full md:w-[520px] md:max-h-[60vh] h-full bg-background rounded-lg flex flex-col mb-2">
+			<Card
+				class="w-full md:w-[520px] md:max-h-[60vh] h-full bg-background rounded-lg flex flex-col mb-2"
+			>
 				<div class="w-full flex justify-between items-center shadow-md pl-1 mb-1">
 					<h2 class="ml-2 text-base font-semibold">
 						{#if page.state.stopArriveBy}

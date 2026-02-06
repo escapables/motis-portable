@@ -136,7 +136,12 @@
 			<span class="ml-6">
 				{t.sharingProvider}:
 				{#if rentalProviderUrl}
-					<a href={rentalProviderUrl} target="_blank" rel="noopener noreferrer" class="hover:underline">
+					<a
+						href={rentalProviderUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="hover:underline"
+					>
 						{l.rental.systemName}
 					</a>
 				{:else}

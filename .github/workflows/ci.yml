@@ -123,7 +123,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.config.mode }} `
             -DMOTIS_MIMALLOC=ON
           .\build\buildcache\bin\buildcache.exe -z
-          cmake --build build --target motis motis-test motis-web-ui
+          cmake --build build --target motis motis-portable motis-web-ui
           $CompilerExitCode = $LastExitCode
           Copy-Item ${env:VCToolsRedistDir}x64\Microsoft.VC143.CRT\*.dll .\build\
           .\build\buildcache\bin\buildcache.exe -s
@@ -131,7 +131,7 @@ jobs:
 
       # ==== TESTS ====
       - name: Run Tests
-        run: .\build\motis-test.exe
+        run: .\build\motis-portable.exe
 
       # ==== DISTRIBUTION ====
       - name: Move Profiles
@@ -216,13 +216,13 @@ jobs:
       - name: Build
         run: |
           ./build/buildcache/bin/buildcache -z
-          cmake --build build --target motis motis-test motis-web-ui
+          cmake --build build --target motis motis-portable motis-web-ui
           ./build/buildcache/bin/buildcache -s
 
       # ==== TESTS ====
       - name: Run Tests
         if: matrix.config.tests == 'On'
-        run: build/motis-test
+        run: build/motis-portable
 
       # ==== SAVE CACHE ====
       - name: Save buildcache cache
@@ -310,13 +310,13 @@ jobs:
       - name: Build
         run: |
           buildcache -z
-          cmake --build build --target motis motis-test motis-web-ui
+          cmake --build build --target motis motis-portable motis-web-ui
           buildcache -s
 
       # ==== TESTS ====
       - name: Run Integration Tests
         if: matrix.config.preset != 'linux-arm64-release'
-        run: ${{ matrix.config.emulator }} build/motis-test
+        run: ${{ matrix.config.emulator }} build/motis-portable
 
       # ==== FULL DATASET TEST ====
       - name: Test Full Dataset

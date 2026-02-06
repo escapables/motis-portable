@@ -24,7 +24,13 @@ export const sanitizeLinkHref = (href: string | null | undefined): string | unde
 		return undefined;
 	}
 	// Normalize control chars and whitespace so protocol checks cannot be bypassed.
-	const normalized = trimmed.replace(/[\u0000-\u001F\u007F\s]+/g, '').toLowerCase();
+	const normalized = Array.from(trimmed)
+		.filter((char) => {
+			const code = char.charCodeAt(0);
+			return code > 0x1f && code !== 0x7f && !/\s/.test(char);
+		})
+		.join('')
+		.toLowerCase();
 	if (BLOCKED_LINK_PROTOCOLS.some((prefix) => normalized.startsWith(prefix))) {
 		return undefined;
 	}
@@ -38,7 +44,9 @@ export const sanitizeExternalHttpUrl = (href: string | null | undefined): string
 	}
 	try {
 		const parsed = new URL(safeHref);
-		return ALLOWED_EXTERNAL_PROTOCOLS.includes(parsed.protocol as (typeof ALLOWED_EXTERNAL_PROTOCOLS)[number])
+		return ALLOWED_EXTERNAL_PROTOCOLS.includes(
+			parsed.protocol as (typeof ALLOWED_EXTERNAL_PROTOCOLS)[number]
+		)
 			? parsed.toString()
 			: undefined;
 	} catch {

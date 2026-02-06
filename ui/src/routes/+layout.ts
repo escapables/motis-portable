@@ -5,15 +5,21 @@ import type { QuerySerializerOptions } from '@hey-api/client-fetch';
 export const prerender = true;
 
 if (browser) {
+	type TauriWindow = Window & {
+		__TAURI__?: unknown;
+		__TAURI_INTERNALS__?: unknown;
+	};
+
 	const params = new URL(window.location.href).searchParams;
 	const defaultProtocol = window.location.protocol;
 	const defaultHost = window.location.hostname;
 	const defaultPort = '8080';
 	const motisParam = params.get('motis');
-	
+
 	// Check if running in Tauri (native app with IPC backend)
-	const isTauri = !!(window as any).__TAURI__ || !!(window as any).__TAURI_INTERNALS__;
-	
+	const tauriWindow = window as TauriWindow;
+	const isTauri = !!tauriWindow.__TAURI__ || !!tauriWindow.__TAURI_INTERNALS__;
+
 	let baseUrl: string;
 	if (isTauri) {
 		// Tauri native app: use the custom protocol for IPC communication.
@@ -33,9 +39,9 @@ if (browser) {
 	} else {
 		baseUrl = String(window.location.origin + window.location.pathname);
 	}
-	
+
 	const querySerializer = { array: { explode: false } } as QuerySerializerOptions;
 	client.setConfig({ baseUrl, querySerializer });
-	
+
 	console.log('[MOTIS] API client configured with baseUrl:', baseUrl);
 }

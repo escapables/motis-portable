@@ -32,7 +32,13 @@
 			if (!event.ctrlKey && !event.metaKey) {
 				return;
 			}
-			if (event.key === '+' || event.key === '=' || event.key === '-' || event.key === '_' || event.key === '0') {
+			if (
+				event.key === '+' ||
+				event.key === '=' ||
+				event.key === '-' ||
+				event.key === '_' ||
+				event.key === '0'
+			) {
 				event.preventDefault();
 			}
 		};
