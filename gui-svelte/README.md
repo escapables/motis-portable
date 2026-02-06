@@ -30,6 +30,8 @@ cd gui-svelte
 ./build-usb.sh
 ```
 
+`build-usb.sh` now prepares a complete `usb-bundle-svelte/` from tracked templates in `gui-svelte/usb-template/` and will build missing `motis` / `motis-ipc` binaries automatically.
+
 ## Run
 
 From a prepared bundle/USB root with `data/` present:
