@@ -226,51 +226,6 @@ fn handle_reverse_geocode(params: &std::collections::HashMap<String, String>)
     }
 }
 
-fn handle_trip(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy trip handler should not be used".to_string())
-}
-
-fn handle_stoptimes(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy stoptimes handler should not be used".to_string())
-}
-
-fn handle_map_trips(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy map trips handler should not be used".to_string())
-}
-
-fn handle_map_initial(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy map initial handler should not be used".to_string())
-}
-
-fn handle_map_stops(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy map stops handler should not be used".to_string())
-}
-
-fn handle_map_levels(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy map levels handler should not be used".to_string())
-}
-
-fn handle_one_to_many(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy one-to-many handler should not be used".to_string())
-}
-
-fn handle_one_to_all(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy one-to-all handler should not be used".to_string())
-}
-
-fn handle_rentals(_params: &std::collections::HashMap<String, String>)
-    -> Result<(Vec<u8>, &'static str), String> {
-    Err("Legacy rentals handler should not be used".to_string())
-}
-
 fn build_passthrough_path_and_query(path: &str, query: &str) -> String {
     if query.is_empty() {
         path.to_string()
