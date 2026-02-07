@@ -1,14 +1,5 @@
 <script lang="ts">
-	import {
-		X,
-		Palette,
-		Rss,
-		Ban,
-		LocateFixed,
-		TrainFront,
-		LoaderCircle,
-		RotateCcw
-	} from '@lucide/svelte';
+	import { X, Palette, Rss, Ban, TrainFront, LoaderCircle, RotateCcw } from '@lucide/svelte';
 	import { getStyle } from '$lib/map/style';
 	import Map from '$lib/map/Map.svelte';
 	import Control from '$lib/map/Control.svelte';
@@ -133,17 +124,6 @@
 				)
 			: undefined
 	);
-
-	const geolocate = new maplibregl.GeolocateControl({
-		positionOptions: {
-			enableHighAccuracy: true
-		},
-		showAccuracyCircle: false
-	});
-
-	const getLocation = () => {
-		geolocate.trigger();
-	};
 
 	const loadInitialState = async () => {
 		initLoading = true;
@@ -602,12 +582,6 @@
 
 	$effect(() => {
 		if (map) {
-			map.addControl(geolocate);
-		}
-	});
-
-	$effect(() => {
-		if (map) {
 			if (page.state.selectedItinerary && activeTab == 'connections') {
 				flyToSelectedItinerary();
 			} else if (activeTab == 'departures' && stop && stop.match) {
@@ -982,9 +956,6 @@
 						{:else}
 							<Palette class="h-[1.2rem] w-[1.2rem]" />
 						{/if}
-					</Button>
-					<Button size="icon" onclick={() => getLocation()}>
-						<LocateFixed class="w-5 h-5" />
 					</Button>
 				</Control>
 				<Rentals {map} {bounds} {zoom} {theme} debug={hasDebug} />
