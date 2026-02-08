@@ -38,6 +38,11 @@
 		const id = m.id?.trim() ?? '';
 		return id.length > 0 && !OSM_OBJECT_ID_REGEX.test(id);
 	};
+	const isValidViaMatch = (m: Location['match']): boolean => {
+		if (!m || m.type !== 'STOP') return false;
+		const id = m.id?.trim() ?? '';
+		return id.length > 0 && !OSM_OBJECT_ID_REGEX.test(id);
+	};
 
 	let vias = $state<Via[]>(
 		via?.map(
@@ -109,6 +114,7 @@
 								bind:selected={vias[index].match}
 								type="STOP"
 								allowCoordinateInput={false}
+								matchFilter={isValidViaMatch}
 							/>
 						</div>
 						<div class="w-24">

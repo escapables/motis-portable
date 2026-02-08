@@ -16,6 +16,7 @@
 		place,
 		type,
 		allowCoordinateInput = true,
+		matchFilter = () => true,
 		transitModes,
 		onChange = () => {}
 	}: {
@@ -26,6 +27,7 @@
 		place?: maplibregl.LngLatLike;
 		type?: undefined | LocationType;
 		allowCoordinateInput?: boolean;
+		matchFilter?: (match: Match) => boolean;
 		transitModes?: Mode[];
 		onChange?: (location: Location) => void;
 	} = $props();
@@ -101,12 +103,14 @@
 				return;
 			}
 
-			items = matches!.map((match: Match): Location => {
-				return {
-					label: getLabel(match),
-					match
-				};
-			});
+			items = matches!
+				.filter((match: Match) => matchFilter(match))
+				.map((match: Match): Location => {
+					return {
+						label: getLabel(match),
+						match
+					};
+				});
 			/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
 			const shown = new Set<string>();
 			items = items.filter((x) => {
