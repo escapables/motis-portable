@@ -33,6 +33,7 @@ usb-bundle-svelte/
 usb-bundle/data/
 usb-bundle/motis-gui
 usb-bundle/motis-ipc
+usb-bundle/ui/
 error.txt
 config2.yml
 AGENTS.md
