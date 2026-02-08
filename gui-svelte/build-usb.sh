@@ -6,6 +6,43 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../" && pwd)"
 USB_BUNDLE="$PROJECT_ROOT/usb-bundle-svelte"
 USB_TEMPLATE="$SCRIPT_DIR/usb-template"
 BUILD_DIR="$PROJECT_ROOT/build"
+OFFLINE_MODE=0
+SKIP_PNPM_INSTALL=0
+
+usage() {
+    cat <<EOF
+Usage: $0 [--offline] [--skip-pnpm-install]
+
+Options:
+  --offline            Build without network access for pnpm commands.
+                       Requires existing local dependencies in node_modules.
+                       Implies --skip-pnpm-install.
+  --skip-pnpm-install  Skip 'pnpm install' and reuse existing node_modules.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --offline)
+            OFFLINE_MODE=1
+            SKIP_PNPM_INSTALL=1
+            shift
+            ;;
+        --skip-pnpm-install)
+            SKIP_PNPM_INSTALL=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "ERROR: Unknown option: $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
 
 echo "================================"
 echo "MOTIS Transit - Svelte UI Build"
@@ -24,9 +61,29 @@ fi
 
 echo "[1/5] Building Svelte UI..."
 cd "$PROJECT_ROOT/ui"
-pnpm install
-pnpm --filter @motis-project/motis-client build
-pnpm build
+
+if [ "$SKIP_PNPM_INSTALL" -eq 1 ]; then
+    echo "Skipping pnpm install (requested)."
+    if [ ! -d "$PROJECT_ROOT/ui/node_modules" ] || [ ! -d "$SCRIPT_DIR/node_modules" ]; then
+        echo "ERROR: Missing node_modules for offline/skip mode."
+        echo "Run once online first: pnpm install"
+        exit 1
+    fi
+else
+    if [ "$OFFLINE_MODE" -eq 1 ]; then
+        pnpm --offline install --frozen-lockfile --config.confirmModulesPurge=false
+    else
+        pnpm install --frozen-lockfile --config.confirmModulesPurge=false
+    fi
+fi
+
+if [ "$OFFLINE_MODE" -eq 1 ]; then
+    pnpm --offline --filter @motis-project/motis-client build
+    pnpm --offline build
+else
+    pnpm --filter @motis-project/motis-client build
+    pnpm build
+fi
 
 echo ""
 echo "[2/5] Ensuring native binaries..."
@@ -59,7 +116,7 @@ echo "[4/5] Copying to USB bundle..."
 mkdir -p "$USB_BUNDLE"
 rm -rf "$USB_BUNDLE/ui" "$USB_BUNDLE/data"
 rm -f "$USB_BUNDLE"/*.desktop
-cp "$USB_TEMPLATE/RUN.sh" "$USB_TEMPLATE/motis-import.sh" "$USB_TEMPLATE/README.txt" "$USB_BUNDLE/"
+cp "$USB_TEMPLATE/RUN.sh" "$USB_TEMPLATE/motis-import.sh" "$USB_TEMPLATE/README.txt" "$USB_TEMPLATE/sweden-route-fix.lua" "$USB_BUNDLE/"
 cp "$SCRIPT_DIR/src-tauri/target/release/motis-gui-svelte" "$USB_BUNDLE/"
 cp "$BUILD_DIR/native/motis-ipc" "$USB_BUNDLE/"
 cp "$MOTIS_BIN" "$USB_BUNDLE/motis"

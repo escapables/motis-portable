@@ -1,14 +1,28 @@
 import type { Mode, Rental } from '@motis-project/motis-client';
+import { getStockholmMetroInfo } from './stockholmMetro';
 
 export type Colorable = { routeColor?: string; routeTextColor?: string; mode: Mode };
 
-export type TripInfo = { tripId?: string; displayName?: string };
+export type TripInfo = {
+	tripId?: string;
+	displayName?: string;
+	routeShortName?: string;
+	agencyId?: string;
+	agencyName?: string;
+	routeId?: string;
+	headsign?: string;
+};
 
 export type RentalInfo = { rental?: Rental };
 
 export type LegLike = Colorable & TripInfo & RentalInfo;
 
 export const getModeStyle = (l: LegLike): [string, string, string] => {
+	const stockholmMetro = getStockholmMetroInfo(l);
+	if (stockholmMetro) {
+		return ['ubahn', stockholmMetro.color, 'white'];
+	}
+
 	switch (l.mode) {
 		case 'WALK':
 			return ['walk', 'hsl(var(--foreground) / 1)', 'hsl(var(--background) / 1)'];

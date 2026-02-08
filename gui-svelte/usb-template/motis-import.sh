@@ -25,6 +25,11 @@ if [ ! -f "$OSM_FILE" ]; then
     exit 1
 fi
 
+if [ ! -f "$SCRIPT_DIR/sweden-route-fix.lua" ]; then
+    echo "ERROR: Missing route fix script: $SCRIPT_DIR/sweden-route-fix.lua"
+    exit 1
+fi
+
 GTFS_ABS="$(cd "$(dirname "$GTFS_FILE")" && pwd)/$(basename "$GTFS_FILE")"
 OSM_ABS="$(cd "$(dirname "$OSM_FILE")" && pwd)/$(basename "$OSM_FILE")"
 
@@ -51,13 +56,14 @@ rm -rf "$DATA_DIR"
 mkdir -p "$DATA_DIR"
 
 cat > "$SCRIPT_DIR/config.yml" << EOF
-osm: $OSM_ABS
+osm: "$OSM_ABS"
 timetable:
   first_day: TODAY
   num_days: 365
   datasets:
     sweden:
-      path: $GTFS_ABS
+      path: "$GTFS_ABS"
+      script: "$SCRIPT_DIR/sweden-route-fix.lua"
 tiles:
   profile: $SCRIPT_DIR/tiles-profile.lua
   db_size: 274877906944

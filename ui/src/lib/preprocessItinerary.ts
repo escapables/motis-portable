@@ -1,5 +1,6 @@
 import type {
 	Itinerary,
+	Leg,
 	Place,
 	PlanResponse,
 	Error as ApiError
@@ -7,6 +8,7 @@ import type {
 import type { Location } from '$lib/Location';
 import polyline from '@mapbox/polyline';
 import type { RequestResult } from '@hey-api/client-fetch';
+import { getStockholmMetroDisplayName, getStockholmMetroInfo } from '$lib/stockholmMetro';
 
 export const joinInterlinedLegs = (it: Itinerary) => {
 	const joinedLegs = [];
@@ -37,6 +39,17 @@ export const joinInterlinedLegs = (it: Itinerary) => {
 };
 
 export const preprocessItinerary = (from: Location, to: Location) => {
+	const applyStockholmMetroWorkaround = (leg: Leg) => {
+		const metroInfo = getStockholmMetroInfo(leg);
+		if (!metroInfo) {
+			return;
+		}
+
+		// Normalize misclassified SL metro legs so icon/wording match rider expectations.
+		leg.mode = 'SUBWAY';
+		leg.displayName = getStockholmMetroDisplayName(leg) ?? leg.displayName;
+	};
+
 	const updateItinerary = (it: Itinerary) => {
 		if (it.legs[0].from.name === 'START') {
 			it.legs[0].from.name = from.label!;
@@ -45,6 +58,7 @@ export const preprocessItinerary = (from: Location, to: Location) => {
 			it.legs[it.legs.length - 1].to.name = to.label!;
 		}
 		joinInterlinedLegs(it);
+		it.legs.forEach(applyStockholmMetroWorkaround);
 	};
 
 	return (r: Awaited<RequestResult<PlanResponse, ApiError, false>>): PlanResponse => {
