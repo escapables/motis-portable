@@ -70,6 +70,19 @@ cd usb-bundle-svelte
 ./motis-import.sh /path/to/gtfs.zip /path/to/osm.pbf
 ```
 
+### Files You Need for Import (and Why)
+
+- `gtfs.zip` (required): Public transit feed in GTFS format.
+  It provides agencies, routes, stops, trips, and timetables used for journey planning.
+- `*.osm.pbf` (required): OpenStreetMap extract in PBF format.
+  It provides street/path geometry for walking connections, street routing, reverse geocoding, and map data generation.
+
+Notes:
+
+- Use files that cover the same geographic area.
+- Keep GTFS as a zip file (do not extract it manually for this script).
+- The import helper already includes the bundled `sweden-route-fix.lua` processing step, so no extra script input is needed.
+
 ### 2. Start app
 
 ```bash
