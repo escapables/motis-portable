@@ -9,33 +9,58 @@
 		class?: string;
 	} = $props();
 
-	let el: undefined | HTMLInputElement;
+	let datePart = $state('');
+	let timePart = $state('');
+
+	const inputClasses =
+		'flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+
+	function toLocalParts(current: Date): { date: string; time: string } {
+		const local = new Date(current.getTime() - current.getTimezoneOffset() * 60000)
+			.toISOString();
+		return { date: local.slice(0, 10), time: local.slice(11, 16) };
+	}
+
+	function commit(nextDate: string, nextTime: string): void {
+		const dateTokens = nextDate.split('-').map(Number);
+		const timeTokens = nextTime.split(':').map(Number);
+		if (dateTokens.length !== 3 || timeTokens.length < 2) {
+			return;
+		}
+		const [year, month, day] = dateTokens;
+		const [hours, minutes] = timeTokens;
+		if (
+			Number.isNaN(year) ||
+			Number.isNaN(month) ||
+			Number.isNaN(day) ||
+			Number.isNaN(hours) ||
+			Number.isNaN(minutes)
+		) {
+			return;
+		}
+		value = new Date(year, month - 1, day, hours, minutes, 0, 0);
+	}
 
 	$effect(() => {
-		if (el !== undefined) {
-			value.setSeconds(0, 0);
-			const dateTimeLocalValue = new Date(value.getTime() - value.getTimezoneOffset() * 60000)
-				.toISOString()
-				.slice(0, -1);
-			el.value = dateTimeLocalValue;
-		}
+		value.setSeconds(0, 0);
+		const parts = toLocalParts(value);
+		datePart = parts.date;
+		timePart = parts.time;
 	});
 </script>
 
-<input
-	type="datetime-local"
-	class={cn(
-		'flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
-		className
-	)}
-	bind:this={el}
-	onchange={(e) => {
-		// @ts-expect-error target exists, value exists
-		const dateTimeLocalValue = e.target!.value!;
-		const fakeUtcTime = new Date(`${dateTimeLocalValue}Z`);
-		if (!isNaN(fakeUtcTime.getTime())) {
-			/* eslint-disable-next-line svelte/prefer-svelte-reactivity */
-			value = new Date(fakeUtcTime.getTime() + fakeUtcTime.getTimezoneOffset() * 60000);
-		}
-	}}
-/>
+<div class={cn('flex flex-row gap-2', className)}>
+	<input
+		type="date"
+		class={cn(inputClasses, 'min-w-[11rem]')}
+		bind:value={datePart}
+		oninput={() => commit(datePart, timePart)}
+	/>
+	<input
+		type="time"
+		step="60"
+		class={cn(inputClasses, 'min-w-[7rem]')}
+		bind:value={timePart}
+		oninput={() => commit(datePart, timePart)}
+	/>
+</div>
