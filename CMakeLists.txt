@@ -34,6 +34,10 @@ endif()
 include(cmake/buildcache.cmake)
 include(cmake/pkg.cmake)
 
+# Nigiri's GTFS-RT generation expects this output directory to exist.
+# Create it proactively so clean out-of-source builds don't fail mid-compile.
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/deps/nigiri/generated/gtfsrt")
+
 if (MOTIS_MIMALLOC)
     if(WIN32)
         set(motis-mimalloc-lib mimalloc)
@@ -159,6 +163,7 @@ target_link_libraries(motis
     motislib
     ianatzdb-res
     pbf_sdf_fonts_res-res
+    tiles_server_res
     tiles_server_res-res
     address_formatting_res-res
 )
