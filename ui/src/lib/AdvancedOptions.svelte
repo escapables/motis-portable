@@ -109,11 +109,11 @@
 		setModes('CAR')(true);
 	}
 
-	const possibleElevationCosts = [
-		{ value: 'NONE' as ElevationCosts, label: t.elevationCosts.NONE },
-		{ value: 'LOW' as ElevationCosts, label: t.elevationCosts.LOW },
-		{ value: 'HIGH' as ElevationCosts, label: t.elevationCosts.HIGH }
-	];
+	const possibleElevationCosts = $derived([
+		{ value: 'NONE' as ElevationCosts, label: $t.elevationCosts.NONE },
+		{ value: 'LOW' as ElevationCosts, label: $t.elevationCosts.LOW },
+		{ value: 'HIGH' as ElevationCosts, label: $t.elevationCosts.HIGH }
+	]);
 	let expanded = $state<boolean>(false);
 	let allowElevationCosts = $derived(
 		serverConfig?.hasElevation &&
@@ -127,7 +127,7 @@
 </script>
 
 <Button variant="ghost" onclick={() => (expanded = !expanded)}>
-	{t.advancedSearchOptions}
+	{$t.advancedSearchOptions}
 	{#if expanded}
 		<ChevronUp class="size-[18px]" />
 	{:else}
@@ -143,7 +143,7 @@
 			<Switch
 				bind:checked={useRoutedTransfers}
 				disabled={!allowRoutedTransfers}
-				label={t.useRoutedTransfers}
+				label={$t.useRoutedTransfers}
 				id="useRoutedTransfers"
 				onCheckedChange={(checked) => {
 					if (wheelchair && !checked) {
@@ -155,7 +155,7 @@
 			<Switch
 				bind:checked={wheelchair}
 				disabled={!allowRoutedTransfers}
-				label={t.wheelchair}
+				label={$t.wheelchair}
 				id="wheelchair"
 				onCheckedChange={(checked) => {
 					if (checked && !useRoutedTransfers) {
@@ -165,14 +165,14 @@
 			/>
 			<Switch
 				bind:checked={requireBikeTransport}
-				label={t.requireBikeTransport}
+				label={$t.requireBikeTransport}
 				onCheckedChange={setModes('BIKE')}
 				id="requireBikeTransport"
 			/>
 			<Switch
 				bind:checked={requireCarTransport}
 				disabled={!allowRoutedTransfers}
-				label={t.requireCarTransport}
+				label={$t.requireCarTransport}
 				id="requireCarTransport"
 				onCheckedChange={(checked) => {
 					if (checked && !useRoutedTransfers && allowRoutedTransfers) {
@@ -190,12 +190,12 @@
 					: 'grid-cols-4'} items-center gap-2"
 			>
 				<div class="text-sm">
-					{t.routingSegments.maxTransfers}
+					{$t.routingSegments.maxTransfers}
 				</div>
 				<NumberSelect bind:value={maxTransfers} possibleValues={possibleMaxTransfers} />
 				{#if maxTravelTime !== undefined}
 					<div class="text-sm">
-						{t.routingSegments.maxTravelTime}
+						{$t.routingSegments.maxTravelTime}
 					</div>
 					<NumberSelect
 						bind:value={maxTravelTime}
@@ -207,7 +207,7 @@
 
 			<!-- First mile -->
 			<StreetModes
-				label={t.routingSegments.firstMile}
+				label={$t.routingSegments.firstMile}
 				disabled={!allowStreetRouting}
 				bind:modes={preTransitModes}
 				bind:maxTransitTime={maxPreTransitTime}
@@ -219,7 +219,7 @@
 
 			<!-- Last mile -->
 			<StreetModes
-				label={t.routingSegments.lastMile}
+				label={$t.routingSegments.lastMile}
 				disabled={!allowStreetRouting}
 				bind:modes={postTransitModes}
 				bind:maxTransitTime={maxPostTransitTime}
@@ -232,7 +232,7 @@
 			<!-- Direct -->
 			{#if directModes !== undefined && maxDirectTime !== undefined && ignoreDirectRentalReturnConstraints !== undefined}
 				<StreetModes
-					label={t.routingSegments.direct}
+					label={$t.routingSegments.direct}
 					disabled={!allowStreetRouting}
 					bind:modes={directModes}
 					bind:maxTransitTime={maxDirectTime}
@@ -247,15 +247,15 @@
 		<!-- Elevation Costs -->
 		<div class="grid grid-cols-2 items-center">
 			<div class="text-sm">
-				{t.selectElevationCosts}
+				{$t.selectElevationCosts}
 			</div>
 			<Select.Root
 				disabled={!allowElevationCosts || !allowStreetRouting}
 				type="single"
 				bind:value={elevationCosts}
 			>
-				<Select.Trigger aria-label={t.selectElevationCosts}>
-					{t.elevationCosts[elevationCosts]}
+				<Select.Trigger aria-label={$t.selectElevationCosts}>
+					{$t.elevationCosts[elevationCosts]}
 				</Select.Trigger>
 				<Select.Content sideOffset={10}>
 					{#each possibleElevationCosts as costs, i (i + costs.value)}

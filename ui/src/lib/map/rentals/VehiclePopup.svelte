@@ -57,7 +57,7 @@
 		<span>{vehicleType?.name || formFactorAssets[vehicle.formFactor].label}</span>
 	</div>
 	<div>
-		{t.sharingProvider}:
+		{$t.sharingProvider}:
 		{#if providerUrl}
 			<a
 				href={providerUrl}
@@ -86,7 +86,7 @@
 	{/if}
 	{#if showActions && vehicleRentalUrl}
 		<Button class="font-bold" variant="outline" href={vehicleRentalUrl} target="_blank">
-			{t.rent}
+			{$t.rent}
 		</Button>
 	{/if}
 	{#if debug}
@@ -99,8 +99,8 @@
 				size="icon"
 				onclick={copyDebugInfo}
 				type="button"
-				title={t.copyToClipboard}
-				aria-label={t.copyToClipboard}
+				title={$t.copyToClipboard}
+				aria-label={$t.copyToClipboard}
 			>
 				<Copy />
 			</Button>

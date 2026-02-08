@@ -80,10 +80,10 @@
 <div class="space-y-2">
 	<div class="flex items-center justify-between">
 		<div class="text-sm">
-			{t.viaStops}
+			{$t.viaStops}
 		</div>
 		<Button variant="outline" onclick={add} disabled={vias.length >= 2}>
-			{t.addViaStop}
+			{$t.addViaStop}
 		</Button>
 	</div>
 	<div class="space-y-2">
@@ -93,7 +93,7 @@
 					<div class="flex gap-2">
 						<div class="grow">
 							<AddressTypeahead
-								placeholder={t.viaStop}
+								placeholder={$t.viaStop}
 								name={`via-${index}`}
 								bind:selected={vias[index].match}
 								type="STOP"
@@ -112,7 +112,7 @@
 					variant="ghost"
 					size="icon"
 					onclick={() => remove(index)}
-					aria-label={t.removeViaStop}
+					aria-label={$t.removeViaStop}
 				>
 					<X class="size-4" />
 				</Button>

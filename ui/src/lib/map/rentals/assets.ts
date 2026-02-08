@@ -12,7 +12,7 @@ import {
 	Zap,
 	type Icon as LucideIcon
 } from '@lucide/svelte';
-import { t } from '$lib/i18n/translation';
+import { getTranslations } from '$lib/i18n/translation';
 
 export type FormFactorAssets = {
 	svg: string;
@@ -42,49 +42,63 @@ export const formFactorAssets: Record<RentalFormFactor, FormFactorAssets> = {
 		station: 'bike_station',
 		vehicle: 'floating_bike',
 		cluster: 'floating_bike_cluster',
-		label: t.bike
+		get label() {
+			return getTranslations().bike;
+		}
 	},
 	CARGO_BICYCLE: {
 		svg: 'cargo_bike',
 		station: 'cargo_bike_station',
 		vehicle: 'floating_cargo_bike',
 		cluster: 'floating_cargo_bike_cluster',
-		label: t.cargoBike
+		get label() {
+			return getTranslations().cargoBike;
+		}
 	},
 	CAR: {
 		svg: 'car',
 		station: 'car_station',
 		vehicle: 'floating_car',
 		cluster: 'floating_car_cluster',
-		label: t.car
+		get label() {
+			return getTranslations().car;
+		}
 	},
 	MOPED: {
 		svg: 'moped',
 		station: 'moped_station',
 		vehicle: 'floating_moped',
 		cluster: 'floating_moped_cluster',
-		label: t.moped
+		get label() {
+			return getTranslations().moped;
+		}
 	},
 	SCOOTER_SEATED: {
 		svg: 'seated_scooter',
 		station: 'seated_scooter_station',
 		vehicle: 'floating_seated_scooter',
 		cluster: 'floating_seated_scooter_cluster',
-		label: t.scooterSeated
+		get label() {
+			return getTranslations().scooterSeated;
+		}
 	},
 	SCOOTER_STANDING: {
 		svg: 'scooter',
 		station: 'scooter_station',
 		vehicle: 'floating_scooter',
 		cluster: 'floating_scooter_cluster',
-		label: t.scooterStanding
+		get label() {
+			return getTranslations().scooterStanding;
+		}
 	},
 	OTHER: {
 		svg: 'other',
 		station: 'other_station',
 		vehicle: 'floating_other',
 		cluster: 'floating_other_cluster',
-		label: t.unknownVehicleType
+		get label() {
+			return getTranslations().unknownVehicleType;
+		}
 	}
 };
 
@@ -92,13 +106,48 @@ export const propulsionTypes: Record<
 	RentalPropulsionType,
 	{ component: typeof LucideIcon; title: string } | null
 > = {
-	ELECTRIC: { component: Zap, title: t.electric },
-	ELECTRIC_ASSIST: { component: Zap, title: t.electricAssist },
-	HYBRID: { component: PlugZap, title: t.hybrid },
-	PLUG_IN_HYBRID: { component: PlugZap, title: t.plugInHybrid },
-	COMBUSTION: { component: Fuel, title: t.combustion },
-	COMBUSTION_DIESEL: { component: Fuel, title: t.combustionDiesel },
-	HYDROGEN_FUEL_CELL: { component: Fuel, title: t.hydrogenFuelCell },
+	ELECTRIC: {
+		component: Zap,
+		get title() {
+			return getTranslations().electric;
+		}
+	},
+	ELECTRIC_ASSIST: {
+		component: Zap,
+		get title() {
+			return getTranslations().electricAssist;
+		}
+	},
+	HYBRID: {
+		component: PlugZap,
+		get title() {
+			return getTranslations().hybrid;
+		}
+	},
+	PLUG_IN_HYBRID: {
+		component: PlugZap,
+		get title() {
+			return getTranslations().plugInHybrid;
+		}
+	},
+	COMBUSTION: {
+		component: Fuel,
+		get title() {
+			return getTranslations().combustion;
+		}
+	},
+	COMBUSTION_DIESEL: {
+		component: Fuel,
+		get title() {
+			return getTranslations().combustionDiesel;
+		}
+	},
+	HYDROGEN_FUEL_CELL: {
+		component: Fuel,
+		get title() {
+			return getTranslations().hydrogenFuelCell;
+		}
+	},
 	HUMAN: null
 };
 
@@ -106,8 +155,18 @@ export const returnConstraints: Record<
 	RentalReturnConstraint,
 	{ component: typeof LucideIcon; title: string } | null
 > = {
-	ANY_STATION: { component: FlagTriangleLeft, title: t.returnOnlyAtStations },
-	ROUNDTRIP_STATION: { component: RefreshCcw, title: t.roundtripStationReturnConstraint },
+	ANY_STATION: {
+		component: FlagTriangleLeft,
+		get title() {
+			return getTranslations().returnOnlyAtStations;
+		}
+	},
+	ROUNDTRIP_STATION: {
+		component: RefreshCcw,
+		get title() {
+			return getTranslations().roundtripStationReturnConstraint;
+		}
+	},
 	NONE: null
 };
 

@@ -97,7 +97,7 @@
 	<AddressTypeahead
 		place={geocodingBiasPlace}
 		name="from"
-		placeholder={t.from}
+		placeholder={$t.from}
 		bind:selected={from}
 		bind:items={fromItems}
 		{transitModes}
@@ -105,7 +105,7 @@
 	<AddressTypeahead
 		place={geocodingBiasPlace}
 		name="to"
-		placeholder={t.to}
+		placeholder={$t.to}
 		bind:selected={to}
 		bind:items={toItems}
 		{transitModes}
@@ -148,16 +148,16 @@
 					value="departure"
 					id="departure"
 					class="sr-only"
-					aria-label={t.departure}
+					aria-label={$t.departure}
 				/>
-				<span>{t.departure}</span>
+				<span>{$t.departure}</span>
 			</Label>
 			<Label
 				for="arrival"
 				class="flex items-center rounded-md border-2 border-muted bg-popover p-1 px-2 hover:bg-accent hover:text-accent-foreground [&:has([data-state=checked])]:border-blue-600 hover:cursor-pointer"
 			>
-				<RadioGroup.Item value="arrival" id="arrival" class="sr-only" aria-label={t.arrival} />
-				<span>{t.arrival}</span>
+				<RadioGroup.Item value="arrival" id="arrival" class="sr-only" aria-label={$t.arrival} />
+				<span>{$t.arrival}</span>
 			</Label>
 		</RadioGroup.Root>
 		<AdvancedOptions

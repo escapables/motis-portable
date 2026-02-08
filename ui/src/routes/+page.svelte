@@ -44,7 +44,7 @@
 	import { client } from '@motis-project/motis-client';
 	import StopTimes from '$lib/StopTimes.svelte';
 	import { onMount, tick, untrack } from 'svelte';
-	import { t } from '$lib/i18n/translation';
+	import { getTranslations, language, setLanguage, t } from '$lib/i18n/translation';
 	import { pushState } from '$app/navigation';
 	import { page } from '$app/state';
 	import { preprocessItinerary } from '$lib/preprocessItinerary';
@@ -194,8 +194,9 @@
 	};
 
 	const formatInitError = (error: unknown): string => {
+		const tr = getTranslations();
 		if (error == null) {
-			return 'Startup failed: unknown initialization error.';
+			return tr.unknownInitializationError;
 		}
 		if (typeof error === 'string') {
 			return error;
@@ -239,7 +240,7 @@
 			}
 			const r = d.data;
 			if (!r) {
-				initError = 'Initialization endpoint returned no data.';
+				initError = getTranslations().noInitializationData;
 				return;
 			}
 			center = [r.lon, r.lat];
@@ -728,7 +729,7 @@
 				close();
 			}}
 		>
-			From
+			{$t.from}
 		</Button>
 		<Button
 			variant="outline"
@@ -738,7 +739,7 @@
 				close();
 			}}
 		>
-			To
+			{$t.to}
 		</Button>
 	{:else if activeTab == 'isochrones'}
 		<Button
@@ -749,7 +750,7 @@
 				close();
 			}}
 		>
-			{t.position}
+			{$t.position}
 		</Button>
 	{/if}
 {/snippet}
@@ -767,9 +768,9 @@
 			class="max-w-full w-full md:w-[520px] overflow-y-auto"
 		>
 			<Tabs.List class="grid grid-cols-3">
-				<Tabs.Trigger value="connections">{t.connections}</Tabs.Trigger>
-				<Tabs.Trigger value="departures">{t.departures}</Tabs.Trigger>
-				<Tabs.Trigger value="isochrones">{t.isochrones.title}</Tabs.Trigger>
+				<Tabs.Trigger value="connections">{$t.connections}</Tabs.Trigger>
+				<Tabs.Trigger value="departures">{$t.departures}</Tabs.Trigger>
+				<Tabs.Trigger value="isochrones">{$t.isochrones.title}</Tabs.Trigger>
 			</Tabs.List>
 			<Tabs.Content value="connections">
 				<Card class="overflow-y-auto overflow-x-hidden bg-background rounded-lg">
@@ -891,7 +892,7 @@
 		<Control class="min-h-0 md:mb-2 md:flex">
 			<Card class="w-full md:w-[520px] bg-background rounded-lg flex flex-col mb-2">
 				<div class="w-full flex justify-between items-center shadow-md pl-1 mb-1">
-					<h2 class="ml-2 text-base font-semibold">{t.journeyDetails}</h2>
+					<h2 class="ml-2 text-base font-semibold">{$t.journeyDetails}</h2>
 					<Button
 						variant="ghost"
 						onclick={() => {
@@ -923,11 +924,11 @@
 				<div class="w-full flex justify-between items-center shadow-md pl-1 mb-1">
 					<h2 class="ml-2 text-base font-semibold">
 						{#if page.state.stopArriveBy}
-							{t.arrivals}
+							{$t.arrivals}
 						{:else}
-							{t.departures}
+							{$t.departures}
 						{/if}
-						in
+						:
 						{stopNameFromResponse}
 					</h2>
 					<Button
@@ -967,13 +968,13 @@
 	<div class="h-dvh flex items-center justify-center bg-secondary text-foreground">
 		<div class="rounded-lg border bg-background px-6 py-5 flex items-center gap-3 shadow-sm">
 			<LoaderCircle class="h-5 w-5 animate-spin" />
-			<span class="text-sm font-medium">Loading MOTIS data...</span>
+			<span class="text-sm font-medium">{$t.loadingData}</span>
 		</div>
 	</div>
 {:else if initError}
 	<div class="h-dvh flex items-center justify-center bg-secondary px-4">
 		<Card class="w-full max-w-xl p-5 flex flex-col gap-3">
-			<h2 class="text-lg font-semibold">Startup failed</h2>
+			<h2 class="text-lg font-semibold">{$t.startupFailed}</h2>
 			<p class="text-sm text-muted-foreground break-words">{initError}</p>
 			<div>
 				<Button
@@ -983,7 +984,7 @@
 					}}
 				>
 					<RotateCcw class="h-4 w-4" />
-					Retry
+					{$t.retry}
 				</Button>
 			</div>
 		</Card>
@@ -1006,6 +1007,41 @@
 
 		<LevelSelect {bounds} {zoom} bind:level />
 
+		<Control position="top-right" class="pt-2 text-right">
+			<div
+				class="inline-flex overflow-hidden rounded-md border bg-background shadow-sm"
+				role="group"
+				aria-label={$t.language}
+			>
+				<button
+					class={cn(
+						'px-2 py-1 text-xs font-semibold',
+						$language === 'en'
+							? 'bg-blue-600 text-white'
+							: 'bg-background text-foreground hover:bg-accent'
+					)}
+					type="button"
+					onclick={() => setLanguage('en')}
+					aria-pressed={$language === 'en'}
+				>
+					EN
+				</button>
+				<button
+					class={cn(
+						'border-l px-2 py-1 text-xs font-semibold',
+						$language === 'sv'
+							? 'bg-blue-600 text-white'
+							: 'bg-background text-foreground hover:bg-accent'
+					)}
+					type="button"
+					onclick={() => setLanguage('sv')}
+					aria-pressed={$language === 'sv'}
+				>
+					SV
+				</button>
+			</div>
+		</Control>
+
 		{#if browser}
 			{#if isSmallScreen}
 				<Drawer class="relative z-10 h-full mt-5 flex flex-col" bind:showMap>
@@ -1021,18 +1057,11 @@
 		<div class="maplibregl-ctrl-{isSmallScreen ? 'top-left' : 'bottom-right'}">
 			<div class="maplibregl-ctrl maplibregl-ctrl-attrib">
 				<div class="maplibregl-ctrl-attrib-inner">
-					&copy;
-					<a
-						href="http://www.openstreetmap.org/copyright"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						OpenStreetMap
-					</a>
+						&copy; Stig
 					{#if dataAttributionLink}
 						|
 						<a href={dataAttributionLink} target="_blank" rel="noopener noreferrer">
-							{t.timetableSources}
+							{$t.timetableSources}
 						</a>
 					{/if}
 				</div>

@@ -1,6 +1,14 @@
 import type { Translations } from './translation';
 
 const translations: Translations = {
+	language: 'Language',
+	loadingData: 'Loading MOTIS data...',
+	startupFailed: 'Startup failed',
+	retry: 'Retry',
+	noInitializationData: 'Initialization endpoint returned no data.',
+	unknownInitializationError: 'Startup failed: unknown initialization error.',
+	fareFor: 'for',
+	fareAs: 'as',
 	ticket: 'Билет',
 	ticketOptions: 'Опции за билет',
 	includedInTicket: 'Включено в билета',

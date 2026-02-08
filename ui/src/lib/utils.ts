@@ -5,7 +5,7 @@ import { pushState, replaceState } from '$app/navigation';
 import { page } from '$app/state';
 import { trip } from '@motis-project/motis-client';
 import { joinInterlinedLegs } from './preprocessItinerary';
-import { language } from './i18n/translation';
+import { getLanguage } from './i18n/translation';
 import { tick } from 'svelte';
 
 export function cn(...inputs: ClassValue[]) {
@@ -150,7 +150,7 @@ export const onClickStop = (
 
 export const onClickTrip = async (tripId: string, replace: boolean = false) => {
 	const { data: itinerary, error } = await trip({
-		query: { tripId, joinInterlinedLegs: false, language: [language] }
+		query: { tripId, joinInterlinedLegs: false, language: [getLanguage()] }
 	});
 	if (error) {
 		console.log(error);

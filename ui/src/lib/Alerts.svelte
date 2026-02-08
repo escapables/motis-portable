@@ -31,11 +31,11 @@
 					<div class="flex flex-col gap-1 overflow-hidden">
 						<div class="font-bold flex gap-2 items-center text-blue-700 dark:text-blue-500">
 							<Info />
-							{t.alerts.information}
+							{$t.alerts.information}
 							{#if alerts.length > 1}
 								<span class="text-muted-foreground font-normal">
 									+{alerts.length - 1}
-									{t.alerts.more}
+									{$t.alerts.more}
 								</span>
 							{/if}
 						</div>
@@ -62,9 +62,9 @@
 									{@const start = new Date(impactPeriod.start ?? 0)}
 									{@const end = new Date(impactPeriod.end ?? 0)}
 									<p>
-										<strong>{t.alerts.validFrom}:</strong>
+										<strong>{$t.alerts.validFrom}:</strong>
 										{formatDateTime(start, tz)}
-										<strong>{t.alerts.until}</strong>
+										<strong>{$t.alerts.until}</strong>
 										{formatDateTime(end, tz)}
 										<span class="text-xs font-normal">{getTz(start, tz)}</span>
 									</p>

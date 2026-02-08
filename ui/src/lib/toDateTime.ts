@@ -1,6 +1,7 @@
-import { language } from './i18n/translation';
+import { getLanguage } from './i18n/translation';
 
 export const formatTime = (d: Date, timeZone: string | undefined): string => {
+	const language = getLanguage();
 	return d.toLocaleTimeString(language, {
 		hour: 'numeric',
 		minute: 'numeric',
@@ -10,6 +11,7 @@ export const formatTime = (d: Date, timeZone: string | undefined): string => {
 };
 
 export const formatDate = (d: Date, timeZone: string | undefined): string => {
+	const language = getLanguage();
 	return d.toLocaleDateString(language, {
 		day: 'numeric',
 		month: 'numeric',
@@ -19,6 +21,7 @@ export const formatDate = (d: Date, timeZone: string | undefined): string => {
 };
 
 export const formatDateTime = (d: Date, timeZone: string | undefined): string => {
+	const language = getLanguage();
 	return d.toLocaleDateString(language, {
 		day: 'numeric',
 		month: 'numeric',
@@ -30,6 +33,7 @@ export const formatDateTime = (d: Date, timeZone: string | undefined): string =>
 };
 
 export const getTz = (d: Date, timeZone: string | undefined): string | undefined => {
+	const language = getLanguage();
 	const timeZoneOffset = new Intl.DateTimeFormat(language, {
 		timeZone,
 		timeZoneName: 'shortOffset'

@@ -80,14 +80,16 @@
 		}))
 	);
 
-	const displayLevels = new Map<DisplayLevel, string>([
-		['OVERLAY_RECTS', t.isochrones.canvasRects],
-		['OVERLAY_CIRCLES', t.isochrones.canvasCircles],
-		['GEOMETRY_CIRCLES', t.isochrones.geojsonCircles]
-	]);
-	const possibleDisplayLevels = [
+	const displayLevels = $derived(
+		new Map<DisplayLevel, string>([
+			['OVERLAY_RECTS', $t.isochrones.canvasRects],
+			['OVERLAY_CIRCLES', $t.isochrones.canvasCircles],
+			['GEOMETRY_CIRCLES', $t.isochrones.geojsonCircles]
+		])
+	);
+	const possibleDisplayLevels = $derived([
 		...[...displayLevels.entries()].map(([id, label]) => ({ value: id, label: label }))
-	];
+	]);
 
 	let oneItems = $state<Array<Location>>([]);
 
@@ -123,7 +125,7 @@
 {#snippet additionalComponents()}
 	<div class="grid grid-cols-[2fr_2fr_1fr] items-center gap-2">
 		<Select.Root type="single" bind:value={options.displayLevel}>
-			<Select.Trigger class="overflow-hidden" aria-label={t.isochrones.displayLevel}>
+			<Select.Trigger class="overflow-hidden" aria-label={$t.isochrones.displayLevel}>
 				{displayLevels.get(options.displayLevel)}
 			</Select.Trigger>
 			<Select.Content sideOffset={10}>
@@ -157,7 +159,7 @@
 	<AddressTypeahead
 		place={geocodingBiasPlace}
 		name="one"
-		placeholder={t.position}
+		placeholder={$t.position}
 		bind:selected={one}
 		bind:items={oneItems}
 	/>
@@ -184,9 +186,9 @@
 					value="departure"
 					id="isochrones-departure"
 					class="sr-only"
-					aria-label={t.departure}
+					aria-label={$t.departure}
 				/>
-				<span>{t.departure}</span>
+				<span>{$t.departure}</span>
 			</Label>
 			<Label
 				for="isochrones-arrival"
@@ -196,9 +198,9 @@
 					value="arrival"
 					id="isochrones-arrival"
 					class="sr-only"
-					aria-label={t.arrival}
+					aria-label={$t.arrival}
 				/>
-				<span>{t.arrival}</span>
+				<span>{$t.arrival}</span>
 			</Label>
 		</RadioGroup.Root>
 		<AdvancedOptions

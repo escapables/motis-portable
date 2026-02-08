@@ -102,7 +102,7 @@
 									}}
 									class="px-2 py-1 bg-blue-600 hover:!bg-blue-700 text-white font-bold text-sm border rounded-lg text-nowrap"
 								>
-									{t.earlier}
+									{$t.earlier}
 								</button>
 								<div class="border-t w-full h-0"></div>
 							</div>
@@ -116,7 +116,7 @@
 								<Card class="p-4">
 									<div class="text-base flex justify-around items-start space-x-1 w-full">
 										<div class="overflow-hidden basis-1/4 h-full flex flex-col">
-											<div class="text-xs font-bold uppercase text-slate-400">{t.departure}</div>
+											<div class="text-xs font-bold uppercase text-slate-400">{$t.departure}</div>
 											<Time
 												isRealtime={it.legs[0].realTime}
 												timestamp={it.startTime}
@@ -128,7 +128,7 @@
 										</div>
 										<Separator orientation="vertical" />
 										<div class="overflow-hidden basis-1/4 h-full flex flex-col">
-											<div class="text-xs font-bold uppercase text-slate-400">{t.arrival}</div>
+											<div class="text-xs font-bold uppercase text-slate-400">{$t.arrival}</div>
 											<Time
 												isRealtime={it.legs[it.legs.length - 1].realTime}
 												timestamp={it.endTime}
@@ -141,7 +141,7 @@
 										<Separator orientation="vertical" />
 										<div class="overflow-hidden basis-1/4 h-full flex flex-col">
 											<div class="text-xs font-bold uppercase text-slate-400">
-												{t.transfers}
+												{$t.transfers}
 											</div>
 											<div class="text-center text-nowrap">
 												{it.transfers}
@@ -150,7 +150,7 @@
 										<Separator orientation="vertical" />
 										<div class="overflow-hidden basis-1/4 h-full flex flex-col">
 											<div class="text-xs font-bold uppercase text-slate-400">
-												{t.duration}
+												{$t.duration}
 											</div>
 											<div class="text-center text-nowrap">
 												{formatDurationSec(it.duration)}
@@ -181,7 +181,7 @@
 									}}
 									class="px-2 py-1 bg-blue-600 hover:!bg-blue-700 text-white text-sm font-bold border rounded-lg text-nowrap"
 								>
-									{t.later}
+									{$t.later}
 								</button>
 								<div class="border-t w-full h-0"></div>
 							</div>
@@ -192,7 +192,7 @@
 				{/each}
 			</div>
 		{:else if r.direct.length === 0}
-			<ErrorMessage message={t.noItinerariesFound} status={200} />
+			<ErrorMessage message={$t.noItinerariesFound} status={200} />
 		{/if}
 	{:catch e}
 		<ErrorMessage message={e.error ?? e} status={e.status ?? 404} />

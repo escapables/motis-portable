@@ -66,19 +66,19 @@
 	<div class="space-y-1">
 		{#if zone}
 			{#if zone.name}
-				<div class="font-semibold">{t.rentalGeofencingZone}: {zone.name}</div>
+				<div class="font-semibold">{$t.rentalGeofencingZone}: {zone.name}</div>
 			{:else}
-				<div class="font-semibold">{t.rentalGeofencingZone}</div>
+				<div class="font-semibold">{$t.rentalGeofencingZone}</div>
 			{/if}
 		{:else if station}
 			{#if station.name}
-				<div class="font-semibold">{t.rentalStation}: {station.name}</div>
+				<div class="font-semibold">{$t.rentalStation}: {station.name}</div>
 			{:else}
-				<div class="font-semibold">{t.rentalStation}</div>
+				<div class="font-semibold">{$t.rentalStation}</div>
 			{/if}
 		{/if}
 		<div>
-			{t.sharingProvider}: {#if providerUrl}
+			{$t.sharingProvider}: {#if providerUrl}
 				<a
 					href={providerUrl}
 					target="_blank"
@@ -94,11 +94,11 @@
 	</div>
 	<div class="space-y-1">
 		<div>
-			{rideThroughAllowed ? t.rideThroughAllowed : t.rideThroughNotAllowed}
+			{rideThroughAllowed ? $t.rideThroughAllowed : $t.rideThroughNotAllowed}
 		</div>
 		{#if rideThroughAllowed}
 			<div>
-				{rideEndAllowed ? t.rideEndAllowed : t.rideEndNotAllowed}
+				{rideEndAllowed ? $t.rideEndAllowed : $t.rideEndNotAllowed}
 			</div>
 		{/if}
 	</div>
@@ -112,8 +112,8 @@
 				size="icon"
 				onclick={copyDebugInfo}
 				type="button"
-				title={t.copyToClipboard}
-				aria-label={t.copyToClipboard}
+				title={$t.copyToClipboard}
+				aria-label={$t.copyToClipboard}
 			>
 				<Copy />
 			</Button>

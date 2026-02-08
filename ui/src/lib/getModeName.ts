@@ -1,8 +1,9 @@
 import type { Leg } from '@motis-project/motis-client';
 
-import { t } from './i18n/translation';
+import { getTranslations } from './i18n/translation';
 
 export const getModeName = (l: Leg) => {
+	const t = getTranslations();
 	switch (l.mode) {
 		case 'WALK':
 			return t.walk;
@@ -32,7 +33,7 @@ export const getModeName = (l: Leg) => {
 		case 'ODM':
 			return t.taxi;
 		case 'FLEX':
-			return 'Flex';
+			return t.FLEX;
 		default:
 			return `${l.mode}`;
 	}

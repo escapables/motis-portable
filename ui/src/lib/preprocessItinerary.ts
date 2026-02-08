@@ -8,7 +8,14 @@ import type {
 import type { Location } from '$lib/Location';
 import polyline from '@mapbox/polyline';
 import type { RequestResult } from '@hey-api/client-fetch';
-import { getStockholmMetroDisplayName, getStockholmMetroInfo } from '$lib/stockholmMetro';
+import {
+	getGothenburgTramDisplayName,
+	getGothenburgTramInfo,
+	getStockholmMetroDisplayName,
+	getStockholmMetroInfo,
+	getStockholmRailDisplayName,
+	getStockholmRailInfo
+} from '$lib/stockholmMetro';
 
 export const joinInterlinedLegs = (it: Itinerary) => {
 	const joinedLegs = [];
@@ -39,15 +46,33 @@ export const joinInterlinedLegs = (it: Itinerary) => {
 };
 
 export const preprocessItinerary = (from: Location, to: Location) => {
-	const applyStockholmMetroWorkaround = (leg: Leg) => {
+	const applyCityTransitWorkaround = (leg: Leg) => {
 		const metroInfo = getStockholmMetroInfo(leg);
-		if (!metroInfo) {
+		if (metroInfo) {
+			// Normalize misclassified SL metro legs so icon/wording match rider expectations.
+			leg.mode = 'SUBWAY';
+			leg.displayName = getStockholmMetroDisplayName(leg) ?? leg.displayName;
 			return;
 		}
 
-		// Normalize misclassified SL metro legs so icon/wording match rider expectations.
-		leg.mode = 'SUBWAY';
-		leg.displayName = getStockholmMetroDisplayName(leg) ?? leg.displayName;
+		const railInfo = getStockholmRailInfo(leg);
+		if (railInfo && leg.mode === 'FERRY') {
+			// Normalize misclassified SL local rail legs so they don't appear as ferries.
+			leg.mode = 'RAIL';
+			leg.displayName = getStockholmRailDisplayName(leg) ?? leg.displayName;
+			return;
+		}
+
+		const gothenburgTramInfo = getGothenburgTramInfo(leg);
+		if (!gothenburgTramInfo) {
+			return;
+		}
+
+		// Normalize misclassified Västtrafik tram legs so they render as tram instead of ferry.
+		if (leg.mode === 'FERRY') {
+			leg.mode = 'TRAM';
+		}
+		leg.displayName = getGothenburgTramDisplayName(leg) ?? leg.displayName;
 	};
 
 	const updateItinerary = (it: Itinerary) => {
@@ -58,7 +83,7 @@ export const preprocessItinerary = (from: Location, to: Location) => {
 			it.legs[it.legs.length - 1].to.name = to.label!;
 		}
 		joinInterlinedLegs(it);
-		it.legs.forEach(applyStockholmMetroWorkaround);
+		it.legs.forEach(applyCityTransitWorkaround);
 	};
 
 	return (r: Awaited<RequestResult<PlanResponse, ApiError, false>>): PlanResponse => {

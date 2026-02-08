@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/translation';
+	import { t, type Translations } from '$lib/i18n/translation';
 	import { BusFront } from '@lucide/svelte';
 	import * as Select from '$lib/components/ui/select';
 	import { possibleTransitModes, type TransitMode } from '$lib/Modes';
@@ -10,16 +10,18 @@
 		transitModes: TransitMode[];
 	} = $props();
 
-	type TranslationKey = keyof typeof t;
+	type TranslationKey = keyof Translations;
 
-	const availableTransitModes = possibleTransitModes.map((value) => ({
-		value,
-		label: t[value as TranslationKey] as string
-	}));
+	const availableTransitModes = $derived(
+		possibleTransitModes.map((value) => ({
+			value,
+			label: $t[value as TranslationKey] as string
+		}))
+	);
 
 	const selectTransitModesLabel = $derived(
 		transitModes.length == possibleTransitModes.length || transitModes.includes('TRANSIT')
-			? t.defaultSelectedModes
+			? $t.defaultSelectedModes
 			: availableTransitModes
 					.filter((m) => transitModes?.includes(m.value))
 					.map((m) => m.label)
@@ -30,7 +32,7 @@
 <Select.Root type="multiple" bind:value={transitModes}>
 	<Select.Trigger
 		class="flex items-center w-full overflow-hidden"
-		aria-label={t.selectTransitModes}
+		aria-label={$t.selectTransitModes}
 	>
 		<BusFront class="mr-[9px] size-6 text-muted-foreground shrink-0" />
 		{selectTransitModesLabel}

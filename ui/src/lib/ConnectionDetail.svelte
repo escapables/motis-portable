@@ -82,7 +82,7 @@
 					</div>
 					{#if p.track && !hidePlatform}
 						<span class="text-nowrap px-2 border rounded-xl ml-1 mr-4">
-							{getModeLabel(mode) == 'Track' ? t.trackAbr : t.platformAbr}
+							{getModeLabel(mode) == 'Track' ? $t.trackAbr : $t.platformAbr}
 							{p.track}
 						</span>
 					{/if}
@@ -91,7 +91,7 @@
 					{#if (p as Place & { switchTo?: Leg }).switchTo}
 						{@const switchTo = (p as Place & { switchTo: Leg }).switchTo}
 						<div class="flex items-center text-sm mt-1">
-							{t.continuesAs}
+							{$t.continuesAs}
 							{switchTo.displayName!}
 							<ArrowRight class="mx-1 size-4" />
 							{switchTo.headsign}
@@ -102,10 +102,10 @@
 							<CircleX class="stroke-destructive size-4" />
 							<span class="ml-1 leading-none">
 								{pickupNotAllowedOrEnd && dropoffNotAllowedOrStart
-									? t.inOutDisallowed
+									? $t.inOutDisallowed
 									: pickupNotAllowedOrEnd
-										? t.inDisallowed
-										: t.outDisallowed}
+										? $t.inDisallowed
+										: $t.outDisallowed}
 							</span>
 						</div>
 					{/if}
@@ -134,7 +134,7 @@
 		</span>
 		{#if l.rental && l.rental.systemName}
 			<span class="ml-6">
-				{t.sharingProvider}:
+				{$t.sharingProvider}:
 				{#if rentalProviderUrl}
 					<a
 						href={rentalProviderUrl}
@@ -151,19 +151,19 @@
 		{/if}
 		{#if l.rental?.returnConstraint == 'ROUNDTRIP_STATION'}
 			<span class="ml-6">
-				{t.roundtripStationReturnConstraint}
+				{$t.roundtripStationReturnConstraint}
 			</span>
 		{/if}
 		{#if rentalActionUrl}
 			<span class="ml-6">
 				<Button class="font-bold" variant="outline" href={rentalActionUrl} target="_blank">
-					{t.rent}
+					{$t.rent}
 				</Button>
 			</span>
 		{/if}
 		{#if stepsWithElevation && stepsWithElevation.length > 0}
 			<div class="ml-6 flex items-center gap-2 text-xs">
-				{t.incline}
+				{$t.incline}
 				<div class="flex items-center">
 					<ArrowUp class="size-4" />
 					{stepsWithElevation.reduce((acc: number, s: StepInstruction) => acc + s.elevationUp!, 0)} m
@@ -180,13 +180,13 @@
 		{#if stepsWithToll && stepsWithToll.length > 0}
 			<div class="ml-6 flex items-center gap-2 text-sm text-orange-500">
 				<DollarSign class="size-4" />
-				{t.toll}
+				{$t.toll}
 			</div>
 		{/if}
 		{#if stepsWithAccessRestriction && stepsWithAccessRestriction.length > 0}
 			<div class="ml-6 flex items-center gap-2 text-sm text-orange-500">
 				<CircleX class="size-4" />
-				{t.accessRestriction}
+				{$t.accessRestriction}
 				({stepsWithAccessRestriction
 					.map((s) => s.accessRestriction)
 					.filter((value, index, array) => array.indexOf(value) === index)
@@ -199,11 +199,11 @@
 {#snippet productInfo(product: FareProduct)}
 	{@const eligibilityUrl = sanitizeExternalHttpUrl(product.riderCategory?.eligibilityUrl)}
 	{product.name}
-	{new Intl.NumberFormat(language, { style: 'currency', currency: product.currency }).format(
+	{new Intl.NumberFormat($language, { style: 'currency', currency: product.currency }).format(
 		product.amount
 	)}
 	{#if product.riderCategory}
-		for
+		{$t.fareFor}
 		{#if eligibilityUrl}
 			<a
 				class:italic={product.riderCategory.isDefaultFareCategory}
@@ -221,7 +221,7 @@
 		{/if}
 	{/if}
 	{#if product.media}
-		as
+		{$t.fareAs}
 		{#if product.media.fareMediaName}
 			{product.media.fareMediaName}
 		{:else}
@@ -238,11 +238,11 @@
 		{#if includedInTransfer || fareTransfer.effectiveFareLegProducts[l.effectiveFareLegIndex].length > 0}
 			<div class="pl-1 md:pl-4 my-8 text-xs font-bold">
 				{#if includedInTransfer || (prevTransitLeg && prevTransitLeg.fareTransferIndex === l.fareTransferIndex && prevTransitLeg.effectiveFareLegIndex === l.effectiveFareLegIndex)}
-					{t.includedInTicket}
+					{$t.includedInTicket}
 				{:else}
 					{@const productOptions = fareTransfer.effectiveFareLegProducts[l.effectiveFareLegIndex]}
 					{#if productOptions.length > 1}
-						<div class="mb-1">{t.ticketOptions}:</div>
+						<div class="mb-1">{$t.ticketOptions}:</div>
 					{/if}
 					<ul
 						class:list-disc={productOptions.length > 1}
@@ -276,7 +276,7 @@
 					<div class="border-t h-0 grow shrink"></div>
 					<div class="text-sm text-muted-foreground leading-none px-2 text-center">
 						{#if pred.duration}
-							{formatDurationSec(pred.duration)} {t.walk}
+							{formatDurationSec(pred.duration)} {$t.walk}
 						{/if}
 						{#if pred.distance}
 							({Math.round(pred.distance)} m)
@@ -288,7 +288,7 @@
 								<br />
 								<span class="text-xs font-bold text-foreground text-left">
 									{#if transferProducts.length > 1}
-										<div class="mb-1">{t.ticketOptions}:</div>
+										<div class="mb-1">{$t.ticketOptions}:</div>
 									{/if}
 									<ul
 										class:list-disc={transferProducts.length > 1}
@@ -340,24 +340,24 @@
 
 				{#if l.loopedCalendarSince}
 					<div class="mt-2 flex items-center text-destructive leading-none">
-						{t.dataExpiredSince}
+						{$t.dataExpiredSince}
 						{formatDate(new Date(l.loopedCalendarSince), l.from.tz)}
 					</div>
 				{/if}
 				{#if l.cancelled}
 					<div class="mt-2 flex items-center text-destructive leading-none">
 						<CircleX class="stroke-destructive size-4" />
-						<span class="ml-1 font-bold">{t.tripCancelled}</span>
+						<span class="ml-1 font-bold">{$t.tripCancelled}</span>
 					</div>
 				{/if}
 				{#if !l.scheduled}
 					<div class="mt-2 flex items-center text-green-600 leading-none">
-						<span class="ml-1">{t.unscheduledTrip}</span>
+						<span class="ml-1">{$t.unscheduledTrip}</span>
 					</div>
 				{/if}
 				{#if l.intermediateStops?.length === 0}
 					<div class="py-10 pl-4 md:pl-4 flex items-center text-muted-foreground">
-						{t.tripIntermediateStops(0)} ({formatDurationSec(l.duration)})
+						{$t.tripIntermediateStops(0)} ({formatDurationSec(l.duration)})
 					</div>
 					{@render ticketInfo(prevTransitLeg, l)}
 				{:else}
@@ -378,7 +378,7 @@
 								<polyline points="6 9 12 15 18 9"></polyline>
 							</svg>
 							<span class="ml-2 cursor-pointer">
-								{t.tripIntermediateStops(l.intermediateStops?.length ?? 0)}
+								{$t.tripIntermediateStops(l.intermediateStops?.length ?? 0)}
 								({formatDurationSec(l.duration)})
 							</span>
 						</summary>

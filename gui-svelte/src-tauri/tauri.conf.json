@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "MOTIS Transit",
+  "productName": "MOTIS",
   "version": "0.1.0",
   "identifier": "com.motis.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "MOTIS Transit Planner",
+        "title": "Lysande Linjetrafik",
         "width": 1400,
         "height": 900,
         "zoomHotkeysEnabled": false,

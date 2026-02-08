@@ -17,7 +17,7 @@
 <div id="searchmask-container" class="flex flex-col space-y-4 p-4 relative">
 	<AddressTypeahead
 		name="from"
-		placeholder={t.from}
+		placeholder={$t.from}
 		bind:selected={from}
 		bind:items={fromItems}
 		type="STOP"

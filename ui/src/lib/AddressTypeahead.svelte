@@ -4,7 +4,7 @@
 	import { MapPinHouse as House, MapPin as Place } from '@lucide/svelte';
 	import { LoaderCircle } from '@lucide/svelte';
 	import { parseCoordinatesToLocation, type Location } from './Location';
-	import { language } from './i18n/translation';
+	import { getLanguage } from './i18n/translation';
 	import maplibregl from 'maplibre-gl';
 	import { getModeStyle, type LegLike } from './modeStyle';
 
@@ -86,7 +86,7 @@
 				query: {
 					...biasPlace,
 					text: inputValue,
-					language: [language],
+					language: [getLanguage()],
 					mode: transitModes,
 					type
 				}

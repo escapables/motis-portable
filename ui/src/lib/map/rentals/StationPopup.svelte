@@ -86,7 +86,7 @@
 			<div>{station.address}</div>
 		{/if}
 		<div>
-			{t.sharingProvider}: {#if providerUrl}
+			{$t.sharingProvider}: {#if providerUrl}
 				<a
 					href={providerUrl}
 					target="_blank"
@@ -154,7 +154,7 @@
 	{/if}
 	{#if showActions && stationRentalUrl}
 		<Button class="font-bold" variant="outline" href={stationRentalUrl} target="_blank">
-			{t.rent}
+			{$t.rent}
 		</Button>
 	{/if}
 	{#if debug}
@@ -167,8 +167,8 @@
 				size="icon"
 				onclick={copyDebugInfo}
 				type="button"
-				title={t.copyToClipboard}
-				aria-label={t.copyToClipboard}
+				title={$t.copyToClipboard}
+				aria-label={$t.copyToClipboard}
 			>
 				<Copy />
 			</Button>

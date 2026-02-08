@@ -35,7 +35,7 @@
 
 	const timeZoneOffset = $derived(
 		isValidDate
-			? new Intl.DateTimeFormat(language, { timeZone, timeZoneName: 'shortOffset' })
+			? new Intl.DateTimeFormat($language, { timeZone, timeZoneName: 'shortOffset' })
 					.formatToParts(scheduled)
 					.find((part) => part.type === 'timeZoneName')!.value
 			: undefined
@@ -43,7 +43,7 @@
 	const isSameAsBrowserTimezone = $derived(() => {
 		if (!isValidDate) return false;
 		return (
-			new Intl.DateTimeFormat(language, { timeZoneName: 'shortOffset' })
+			new Intl.DateTimeFormat($language, { timeZoneName: 'shortOffset' })
 				.formatToParts(scheduled)
 				.find((part) => part.type === 'timeZoneName')!.value == timeZoneOffset
 		);
@@ -54,12 +54,12 @@
 			return '';
 		}
 		if (queriedTime === undefined) {
-			return time.toLocaleDateString(language, { timeZone });
+			return time.toLocaleDateString($language, { timeZone });
 		}
 		const base = new Date(queriedTime);
-		return base.toLocaleDateString() === time.toLocaleDateString()
+		return base.toLocaleDateString($language) === time.toLocaleDateString($language)
 			? ''
-			: `(${time.toLocaleString(language, { weekday: 'short', timeZone })})`;
+			: `(${time.toLocaleString($language, { weekday: 'short', timeZone })})`;
 	}
 </script>
 

@@ -1,5 +1,5 @@
 import type { Mode, Rental } from '@motis-project/motis-client';
-import { getStockholmMetroInfo } from './stockholmMetro';
+import { getGothenburgTramInfo, getStockholmMetroInfo, getStockholmRailInfo } from './stockholmMetro';
 
 export type Colorable = { routeColor?: string; routeTextColor?: string; mode: Mode };
 
@@ -7,6 +7,8 @@ export type TripInfo = {
 	tripId?: string;
 	displayName?: string;
 	routeShortName?: string;
+	routeLongName?: string;
+	tripShortName?: string;
 	agencyId?: string;
 	agencyName?: string;
 	routeId?: string;
@@ -21,6 +23,14 @@ export const getModeStyle = (l: LegLike): [string, string, string] => {
 	const stockholmMetro = getStockholmMetroInfo(l);
 	if (stockholmMetro) {
 		return ['ubahn', stockholmMetro.color, 'white'];
+	}
+	const stockholmRail = getStockholmRailInfo(l);
+	if (stockholmRail) {
+		return ['train', stockholmRail.color, 'white'];
+	}
+	const gothenburgTram = getGothenburgTramInfo(l);
+	if (gothenburgTram) {
+		return ['tram', gothenburgTram.color, 'white'];
 	}
 
 	switch (l.mode) {

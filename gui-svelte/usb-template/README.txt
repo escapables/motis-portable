@@ -1,51 +1,46 @@
-MOTIS Portable USB (Svelte UI)
+Lysande Linjetrafik
 ==============================
 
 ENGLISH
 -------
-What this is:
-- Portable, offline MOTIS app for Linux.
-- Native app (Tauri + IPC), no browser required.
-- IPC-first design: no localhost needed for normal use.
+No terminal needed.
+Use these steps in your file manager (Files/Nautilus/Dolphin/etc.).
 
-Quick start:
-1. Put/import your data in `data/` (same folder as this file).
-   Example:
-   ./motis-import.sh /path/to/gtfs.zip /path/to/region.osm.pbf
+Start the app (recommended):
+1. Open the USB folder.
+2. Double-click `RUN.sh`.
+3. If Linux asks, choose `Run` (not `Open`).
+4. Wait until the MOTIS window appears.
 
-2. Start the app (recommended):
-   ./RUN.sh
+Before first start:
+1. Open the `data` folder.
+2. Check that it contains `config.yml`.
+3. If `config.yml` is missing, data is not imported yet.
+   Ask the person who prepared the USB to import data first.
 
-3. Optional debug mode:
-   ./RUN.sh --debug
+If double-click does not start the app:
+1. Right-click `RUN.sh`.
+2. Choose `Run as Program` (or similar).
+3. If that option is missing, open Properties for `RUN.sh` and allow executing
+   it as a program, then try again.
 
-4. Launcher checks only (no GUI start):
-   ./RUN.sh --launcher-self-test
-   Optional external data path:
-   MOTIS_DATA_PATH=/path/to/data ./RUN.sh
+If something goes wrong:
+1. Open `error.txt` in the same folder (if it exists).
+2. Send its contents to support/the person who gave you this USB.
+3. You can also send `launcher.log` for more details.
 
 Important files:
-- `RUN.sh`             FAT32-safe launcher (recommended)
-- `motis-gui-svelte`  Native GUI executable
-- `motis-ipc`         IPC backend executable
-- `data/`             Your imported MOTIS data
-- `launcher.log`      Last launcher run log
-- `error.txt`         Launcher failure summary (created on errors)
+- `RUN.sh`             Main launcher (best for USB/FAT32)
+- `motis-gui-svelte`   App program
+- `motis-ipc`          Backend process
+- `data/`              Transit data
+- `error.txt`          Short error message (created on failure)
+- `launcher.log`       Detailed launcher log
 
-Troubleshooting:
-- "Data folder not found":
-  Import data first with `motis-import.sh`, then verify `data/` exists.
-- "Missing .../data/config.yml":
-  Data exists but is incomplete; import again with `motis-import.sh`.
-- "Permission denied":
-  Use `./RUN.sh` (it copies executables to `/tmp` and sets permissions).
-- "Could not find an executable temp directory":
-  `/tmp` (or `XDG_RUNTIME_DIR`) may be mounted with `noexec`. Remount with `exec`
-  or run on a system where one temp location allows execution.
-- "Missing executable: .../motis-ipc":
-  Bundle is incomplete. Re-copy `motis-ipc` next to `RUN.sh`.
-- No routes found:
-  Confirm your GTFS + OSM region matches the area you are searching.
+Advanced (terminal users):
+- Start in debug mode: `./RUN.sh --debug`
+- Launcher self test only: `./RUN.sh --launcher-self-test`
+- External data path: `MOTIS_DATA_PATH=/path/to/data ./RUN.sh`
 
 More info:
 - https://github.com/escapables/motis-portable
@@ -54,46 +49,41 @@ More info:
 
 SVENSKA
 -------
-Detta är:
-- En portabel, offline MOTIS-app för Linux.
-- En native-app (Tauri + IPC), ingen webbläsare behövs.
-- IPC-först: localhost behövs normalt inte.
+Ingen terminal behövs.
+Använd stegen nedan i filhanteraren (Filer/Nautilus/Dolphin osv.).
 
-Snabbstart:
-1. Lägg/importera data i `data/` (samma mapp som denna fil).
-   Exempel:
-   ./motis-import.sh /sökväg/till/gtfs.zip /sökväg/till/region.osm.pbf
+Starta appen (rekommenderas):
+1. Öppna USB-mappen.
+2. Dubbelklicka på `RUN.sh`.
+3. Om Linux frågar, välj `Kör` (inte `Öppna`).
+4. Vänta tills MOTIS-fönstret visas.
 
-2. Starta appen (rekommenderat):
-   ./RUN.sh
+Innan första start:
+1. Öppna mappen `data`.
+2. Kontrollera att `config.yml` finns där.
+3. Om `config.yml` saknas är data inte importerad ännu.
+   Be personen som förberedde USB-minnet att importera data först.
 
-3. Valfritt felsökningsläge:
-   ./RUN.sh --debug
+Om dubbelklick inte startar appen:
+1. Högerklicka på `RUN.sh`.
+2. Välj `Kör som program` (eller liknande).
+3. Om valet saknas, öppna Egenskaper för `RUN.sh` och tillåt att filen får
+   köras som program. Försök sedan igen.
 
-4. Endast launcher-kontroll (startar inte GUI):
-   ./RUN.sh --launcher-self-test
-   Valfri extern datasökväg:
-   MOTIS_DATA_PATH=/sökväg/till/data ./RUN.sh
+Om något går fel:
+1. Öppna `error.txt` i samma mapp (om filen finns).
+2. Skicka innehållet till support/personen som gav dig USB-minnet.
+3. Du kan också skicka `launcher.log` för mer detaljer.
 
 Viktiga filer:
-- `RUN.sh`             FAT32-säker startskript (rekommenderas)
-- `motis-gui-svelte`  Native GUI-program
-- `motis-ipc`         IPC-backend
-- `data/`             Din importerade MOTIS-data
-- `launcher.log`      Logg från senaste launcher-körning
-- `error.txt`         Kort felsammanfattning (skapas vid fel)
+- `RUN.sh`             Huvudstartare (bäst för USB/FAT32)
+- `motis-gui-svelte`   Appens programfil
+- `motis-ipc`          Backend-process
+- `data/`              Trafikdata
+- `error.txt`          Kort felmeddelande (skapas vid fel)
+- `launcher.log`       Detaljerad startlogg
 
-Felsökning:
-- "Data folder not found":
-  Importera data först med `motis-import.sh`, kontrollera sedan att `data/` finns.
-- "Missing .../data/config.yml":
-  Data finns men är ofullständig; importera igen med `motis-import.sh`.
-- "Permission denied":
-  Använd `./RUN.sh` (kopierar körbara filer till `/tmp` och sätter rättigheter).
-- "Could not find an executable temp directory":
-  `/tmp` (eller `XDG_RUNTIME_DIR`) kan vara monterad med `noexec`. Montera om med
-  `exec` eller kör på ett system där en temporär katalog tillåter körning.
-- "Missing executable: .../motis-ipc":
-  Paketet är ofullständigt. Kopiera `motis-ipc` bredvid `RUN.sh` igen.
-- Inga resor hittas:
-  Kontrollera att GTFS + OSM-området matchar platsen du söker i.
+Avancerat (för terminalanvändare):
+- Starta i debug-läge: `./RUN.sh --debug`
+- Endast launcher-test: `./RUN.sh --launcher-self-test`
+- Extern datasökväg: `MOTIS_DATA_PATH=/sökväg/till/data ./RUN.sh`

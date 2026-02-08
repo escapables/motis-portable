@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { t } from '$lib/i18n/translation';
+	import { t, type Translations } from '$lib/i18n/translation';
 	import { cn } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select';
 	import { Switch } from '$lib/components/ui/switch';
@@ -30,12 +30,14 @@
 		providerGroups: string[];
 	} = $props();
 
-	type TranslationKey = keyof typeof t;
+	type TranslationKey = keyof Translations;
 
-	const availableModes = possibleModes.map((value) => ({
-		value,
-		label: t[value as TranslationKey] as string
-	}));
+	const availableModes = $derived(
+		possibleModes.map((value) => ({
+			value,
+			label: $t[value as TranslationKey] as string
+		}))
+	);
 
 	type ProviderOption = {
 		id: string;
@@ -116,7 +118,7 @@
 		const names = providerGroupOptions
 			.filter((option) => providerGroups.includes(option.id))
 			.map((option) => option.name);
-		return names.length ? names.join(', ') : t.defaultSelectedProviders;
+		return names.length ? names.join(', ') : $t.defaultSelectedProviders;
 	});
 </script>
 
@@ -130,8 +132,8 @@
 		</Select.Trigger>
 		<Select.Content sideOffset={10}>
 			{#each possibleModes as mode, i (i + mode)}
-				<Select.Item value={mode} label={t[mode as TranslationKey] as string}>
-					{t[mode as TranslationKey]}
+				<Select.Item value={mode} label={$t[mode as TranslationKey] as string}>
+					{$t[mode as TranslationKey]}
 				</Select.Item>
 			{/each}
 		</Select.Content>
@@ -143,7 +145,7 @@
 	>
 		<Select.Trigger
 			class="flex items-center w-full overflow-hidden"
-			aria-label={t.routingSegments.maxPreTransitTime}
+			aria-label={$t.routingSegments.maxPreTransitTime}
 		>
 			{formatDurationSec(maxTransitTime)}
 		</Select.Trigger>
@@ -156,13 +158,13 @@
 		</Select.Content>
 	</Select.Root>
 	<div class={cn('text-sm', showRental || 'hidden')}>
-		{t.sharingProviders}
+		{$t.sharingProviders}
 	</div>
 	<div class={cn('col-span-2 col-start-2', showRental || 'hidden')}>
 		<Select.Root {disabled} type="multiple" bind:value={providerGroups}>
 			<Select.Trigger
 				class="flex items-center w-full overflow-hidden"
-				aria-label={t.sharingProviders}
+				aria-label={$t.sharingProviders}
 			>
 				<span>{selectedProviderGroupsLabel}</span>
 			</Select.Trigger>
@@ -192,7 +194,7 @@
 			bind:checked={
 				() => !ignoreRentalReturnConstraints, (v) => (ignoreRentalReturnConstraints = !v)
 			}
-			label={t.considerRentalReturnConstraints}
+			label={$t.considerRentalReturnConstraints}
 			id="ignorePreTransitRentalReturnConstraints"
 		/>
 	</div>

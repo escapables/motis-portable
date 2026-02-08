@@ -43,7 +43,7 @@
 		n: 10,
 		exactRadius: false,
 		radius: 200,
-		language: [language]
+		language: [$language]
 	});
 	/* eslint-disable svelte/prefer-writable-derived */
 	let responses = $state<Array<Promise<StoptimesResponse>>>([]);
@@ -78,9 +78,9 @@
 			}}
 		>
 			{#if arriveBy}
-				{t.switchToDepartures}
+				{$t.switchToDepartures}
 			{:else}
-				{t.switchToArrivals}
+				{$t.switchToArrivals}
 			{/if}
 		</Button>
 	</div>
@@ -103,7 +103,7 @@
 						}}
 						class="px-2 py-1 bg-blue-600 hover:!bg-blue-700 text-white font-bold text-sm border rounded-lg text-nowrap"
 					>
-						{t.earlier}
+						{$t.earlier}
 					</button>
 					<div class="border-t w-full h-0"></div>
 				</div>
@@ -148,7 +148,7 @@
 						</div>
 						{#if stopTime.place.track}
 							<span class="mt-1 text-nowrap px-1 border text-xs rounded-xl">
-								{getModeLabel(stopTime.mode) == 'Track' ? t.trackAbr : t.platformAbr}
+								{getModeLabel(stopTime.mode) == 'Track' ? $t.trackAbr : $t.platformAbr}
 								{stopTime.place.track}
 							</span>
 						{/if}
@@ -159,12 +159,12 @@
 							<CircleX class="stroke-destructive h-4 w-4" />
 							<span class="ml-1 leading-none">
 								{stopTime.tripCancelled
-									? t.tripCancelled
+									? $t.tripCancelled
 									: stopTime.cancelled
-										? t.stopCancelled
+										? $t.stopCancelled
 										: arriveBy
-											? t.outDisallowed
-											: t.inDisallowed}
+											? $t.outDisallowed
+											: $t.inDisallowed}
 							</span>
 						</div>
 					{/if}
@@ -173,7 +173,7 @@
 			{/each}
 			{#if !r.stopTimes.length}
 				<div class="col-span-full w-full flex items-center justify-center">
-					<ErrorMessage message={t.noItinerariesFound} status={404} />
+					<ErrorMessage message={$t.noItinerariesFound} status={404} />
 				</div>
 			{/if}
 
@@ -188,7 +188,7 @@
 						}}
 						class="px-2 py-1 bg-blue-600 hover:!bg-blue-700 text-white text-sm font-bold border rounded-lg text-nowrap"
 					>
-						{t.later}
+						{$t.later}
 					</button>
 					<div class="border-t w-full h-0"></div>
 				</div>
