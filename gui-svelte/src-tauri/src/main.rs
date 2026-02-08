@@ -101,21 +101,22 @@ async fn init_backend(
 ) -> Result<String, String> {
     // Check environment variable first (set by RUN.sh for USB/FAT32 support)
     let env_ipc_path = std::env::var("MOTIS_IPC_PATH").ok();
-    
+
+    let default_exe = get_exe_dir().ok()
+        .map(|d| d.join("motis-ipc"))
+        .and_then(|p| p.to_str().map(|s| s.to_string()));
+
+    let default_data = get_exe_dir().ok()
+        .map(|d| d.join("data"))
+        .and_then(|p| p.to_str().map(|s| s.to_string()));
+
     let exe = exe_path.as_deref()
         .or_else(|| env_ipc_path.as_deref())
-        .or_else(|| {
-            get_exe_dir().ok().map(|d| d.join("motis-ipc"))
-                .and_then(|p| p.to_str().map(|s| s.to_string()))
-                .map(|s| s.leak() as &str)
-        });
-    
-    let data = data_path.as_deref().or_else(|| {
-        get_exe_dir().ok().map(|d| d.join("data"))
-            .and_then(|p| p.to_str().map(|s| s.to_string()))
-            .map(|s| s.leak() as &str)
-    });
-    
+        .or(default_exe.as_deref());
+
+    let data = data_path.as_deref()
+        .or(default_data.as_deref());
+
     native::auto_init(exe, data).await
         .map_err(|e| e.to_string())
 }
