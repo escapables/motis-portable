@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Combobox } from 'bits-ui';
 	import { geocode, type LocationType, type Match, type Mode } from '@motis-project/motis-client';
-	import { MapPinHouse as House, MapPin as Place } from '@lucide/svelte';
 	import { LoaderCircle } from '@lucide/svelte';
 	import { parseCoordinatesToLocation, type Location } from './Location';
 	import { getLanguage } from './i18n/translation';
@@ -36,6 +35,98 @@
 	let match = $state('');
 	let loading = $state(false);
 	let lookupError = $state<string | undefined>(undefined);
+
+	const MODE_PRIORITY: Partial<Record<Mode, number>> = {
+		HIGHSPEED_RAIL: 120,
+		LONG_DISTANCE: 115,
+		NIGHT_RAIL: 110,
+		REGIONAL_FAST_RAIL: 105,
+		REGIONAL_RAIL: 100,
+		RAIL: 95,
+		SUBURBAN: 90,
+		SUBWAY: 85,
+		TRAM: 80,
+		BUS: 70,
+		COACH: 65,
+		FERRY: 60,
+		AIRPLANE: 55,
+		TRANSIT: 50
+	};
+
+	const getPrimaryMode = (modes?: Mode[]): Mode | undefined => {
+		if (!modes || modes.length === 0) return undefined;
+		return modes
+			.slice()
+			.sort((a, b) => (MODE_PRIORITY[b] ?? 0) - (MODE_PRIORITY[a] ?? 0))[0];
+	};
+
+	const isTransitCategory = (category?: string): boolean => {
+		if (!category || category === 'none') return false;
+		const c = category.toLowerCase();
+		return /(bus|rail|train|station|subway|metro|tram|ferry|harbour|harbor|port|terminal|airport|aerodrome|platform|stop)/.test(
+			c
+		);
+	};
+
+	const getModeEmoji = (mode?: Mode): string => {
+		switch (mode) {
+			case 'HIGHSPEED_RAIL':
+			case 'LONG_DISTANCE':
+			case 'NIGHT_RAIL':
+			case 'REGIONAL_FAST_RAIL':
+			case 'REGIONAL_RAIL':
+			case 'RAIL':
+			case 'SUBURBAN':
+				return '🚆';
+			case 'SUBWAY':
+				return '🚇';
+			case 'TRAM':
+				return '🚊';
+			case 'BUS':
+			case 'COACH':
+				return '🚌';
+			case 'FERRY':
+				return '⛴️';
+			case 'AIRPLANE':
+				return '✈️';
+			default:
+				return '🚉';
+		}
+	};
+
+	const getCategoryEmoji = (category?: string): string => {
+		if (!category || category === 'none') return '📍';
+		const c = category.toLowerCase();
+		if (/(airport|aerodrome|helipad)/.test(c)) return '✈️';
+		if (/(rail|train|station|subway|metro|tram|platform)/.test(c)) return '🚉';
+		if (/bus/.test(c)) return '🚌';
+		if (/(ferry|harbour|harbor|port|slipway|boat)/.test(c)) return '⛴️';
+		if (/(restaurant|cafe|coffee|bar|pub|fast_food|food)/.test(c)) return '🍽️';
+		if (/parking/.test(c)) return '🅿️';
+		if (/(hospital|doctors|dentist|pharmacy|medical|veterinary)/.test(c)) return '🏥';
+		if (/(hotel|hostel|motel|guest_house)/.test(c)) return '🏨';
+		if (/(shop|market|mall|supermarket|bakery|books|clothes)/.test(c)) return '🛍️';
+		if (/(park|playground|garden|camping|beach)/.test(c)) return '🌳';
+		return '📍';
+	};
+
+	const getMatchEmoji = (match: Match | undefined): string => {
+		if (!match) return '📍';
+		if (match.type === 'STOP') return getModeEmoji(getPrimaryMode(match.modes));
+		if (match.type === 'ADDRESS') return '🏠';
+		return getCategoryEmoji(match.category);
+	};
+
+	const getMatchPriority = (m: Match): number => {
+		let p = 0;
+		if (m.type === 'STOP') p += 10000;
+		if (m.type === 'PLACE' && isTransitCategory(m.category)) p += 6000;
+		if (m.type === 'ADDRESS') p += 2000;
+		p += MODE_PRIORITY[getPrimaryMode(m.modes) ?? 'OTHER'] ?? 0;
+		p += Math.round((m.importance ?? 0) * 100);
+		p += Math.round(m.score ?? 0);
+		return p;
+	};
 
 	const getDisplayArea = (match: Match | undefined) => {
 		if (match) {
@@ -105,7 +196,13 @@
 
 			items = matches!
 				.filter((match: Match) => matchFilter(match))
-				.map((match: Match): Location => {
+				.map((match: Match, i: number) => ({ match, i }))
+				.sort((a, b) => {
+					const d = getMatchPriority(b.match) - getMatchPriority(a.match);
+					if (d !== 0) return d;
+					return a.i - b.i;
+				})
+				.map(({ match }): Location => {
 					return {
 						label: getLabel(match),
 						match
@@ -226,27 +323,15 @@
 					<Combobox.Item
 						class="flex w-full cursor-default select-none rounded-sm py-4 pl-4 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50"
 						value={JSON.stringify(item.match)}
-						label={item.label}
-					>
-						<div class="flex items-center grow">
-							{#if item.match?.type == 'STOP'}
-								{@render modeCircle(item.match.modes?.length ? item.match.modes![0] : 'BUS')}
-							{:else if item.match?.type == 'ADDRESS'}
-								<House class="size-5" />
-							{:else if item.match?.type == 'PLACE'}
-								{#if !item.match?.category || item.match?.category == 'none'}
-									<Place class="size-5" />
-								{:else}
-									<img
-										src={`icons/${item.match?.category}.svg`}
-										alt={item.match?.category}
-										class="size-5"
-									/>
-								{/if}
-							{/if}
-							<div class="flex flex-col ml-4">
-								<span class="font-semibold text-nowrap text-ellipsis overflow-hidden">
-									{item.match?.name}
+							label={item.label}
+						>
+							<div class="flex items-center grow">
+								<span class="inline-flex h-6 w-6 items-center justify-center text-base leading-none">
+									{getMatchEmoji(item.match)}
+								</span>
+								<div class="flex flex-col ml-4">
+									<span class="font-semibold text-nowrap text-ellipsis overflow-hidden">
+										{item.match?.name}
 								</span>
 								<span class="text-muted-foreground text-nowrap text-ellipsis overflow-hidden">
 									{getDisplayArea(item.match)}
