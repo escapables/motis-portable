@@ -34,9 +34,7 @@ This fork targets one primary outcome: a portable offline Linux desktop app that
 
 Package names vary by distro. Install the equivalent `-dev`/`-devel` packages for your distribution.
 
-## Clean-Clone USB Build (Validated)
-
-Validated in a clean clone on **February 8, 2026**:
+## USB Build
 
 ```bash
 git clone git@github.com:escapables/motis-portable.git
@@ -52,7 +50,6 @@ What this script does:
 4. Assembles `usb-bundle-svelte/`.
 5. Applies runtime permissions.
 
-No manual patching or manual build steps are required when prerequisites are installed.
 First-time builds require network access to download Rust crates, pnpm packages, and CMake-managed dependencies.
 
 ## Offline / Reuse Modes
@@ -62,7 +59,7 @@ First-time builds require network access to download Rust crates, pnpm packages,
 ./gui-svelte/build-usb.sh --skip-pnpm-install
 ```
 
-`--offline` requires previously populated `node_modules`.
+The `--offline` parameter is used for installation in an offline environment and requires previously populated `node_modules`.
 
 ## Run the Bundle
 
@@ -99,13 +96,6 @@ cd usb-bundle-svelte
 - `ui/` Svelte frontend source
 - `src/` MOTIS core logic
 - `docs/` design and implementation notes
-
-## Current Status
-
-- Native IPC bridge working
-- Svelte Tauri app working
-- Route planning, geocoding, reverse geocoding working
-- Vector tiles and glyph rendering working
 
 ## Upstream Project
 
