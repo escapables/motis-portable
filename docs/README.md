@@ -9,7 +9,5 @@
 ## Setup docs (upstream/general)
 
 - `docs/linux-dev-setup.md`
-- `docs/windows-dev-setup.md`
-- `docs/macos-dev-setup.md`
 - `docs/dev-setup-server.md`
 - `docs/setup.md`

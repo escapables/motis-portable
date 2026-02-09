@@ -1,19 +1,5 @@
 option(NO_BUILDCACHE "Disable build caching using buildcache" Off)
 
-# PDB debug information is not supported by buildcache.
-# Store debug info in the object files.
-if (DEFINED ENV{GITHUB_ACTIONS})
-    string(REPLACE "/Zi" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-    string(REPLACE "/Zi" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-    string(REPLACE "/Zi" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-else ()
-    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-endif ()
-
 set(buildcache-bin ${CMAKE_CURRENT_BINARY_DIR}/buildcache/bin/buildcache)
 get_property(rule-launch-set GLOBAL PROPERTY RULE_LAUNCH_COMPILE SET)
 
@@ -52,16 +38,12 @@ else ()
         motis_try_enable_buildcache("${buildcache_program}")
     else ()
         message(STATUS "buildcache not found - downloading")
-        if (APPLE)
-            set(buildcache-archive "buildcache-macos.zip")
-        elseif (UNIX AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "aarch64")
+        if (UNIX AND ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "aarch64")
             set(buildcache-archive "buildcache-linux-arm64.tar.gz")
         elseif (UNIX)
             set(buildcache-archive "buildcache-linux-amd64.tar.gz")
-        elseif (WIN32)
-            set(buildcache-archive "buildcache-windows.zip")
         else ()
-            message(FATAL "Error: NO_BUILDCACHE was not set but buildcache was not in path and system OS detection failed")
+            message(FATAL_ERROR "This fork supports Linux-only builds; unsupported platform for buildcache bootstrap")
         endif ()
 
         set(buildcache-url "https://gitlab.com/bits-n-bites/buildcache/-/releases/v0.31.5/downloads/${buildcache-archive}")

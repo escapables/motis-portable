@@ -10,25 +10,12 @@ set(MOTIS_STACKTRACE "AUTO" CACHE STRING "Enable stacktrace support (AUTO, ON, O
 set_property(CACHE MOTIS_STACKTRACE PROPERTY STRINGS "AUTO;ON;OFF")
 set(_MOTIS_STACKTRACE_ON "$<OR:$<STREQUAL:${MOTIS_STACKTRACE},ON>,$<AND:$<STREQUAL:${MOTIS_STACKTRACE},AUTO>,$<CONFIG:Debug>>>")
 
-if (NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
-    if (MOTIS_MIMALLOC)
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-        set(protobuf_MSVC_STATIC_RUNTIME OFF)
-    else ()
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-        set(protobuf_MSVC_STATIC_RUNTIME ON)
-    endif ()
-endif ()
-
 if (MOTIS_MIMALLOC)
     set(CISTA_USE_MIMALLOC ON)
     set(PPR_MIMALLOC ON)
     set(ADR_MIMALLOC ON)
     set(OSR_MIMALLOC ON)
     set(TILES_MIMALLOC ON)
-    if(WIN32)
-        set(MI_BUILD_SHARED ON)
-    endif()
 endif()
 
 include(cmake/buildcache.cmake)
@@ -39,13 +26,8 @@ include(cmake/pkg.cmake)
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/deps/nigiri/generated/gtfsrt")
 
 if (MOTIS_MIMALLOC)
-    if(WIN32)
-        set(motis-mimalloc-lib mimalloc)
-        target_link_libraries(cista INTERFACE mimalloc)
-    else()
-        set(motis-mimalloc-lib mimalloc-obj)
-        target_link_libraries(cista INTERFACE mimalloc-static)
-    endif()
+    set(motis-mimalloc-lib mimalloc-obj)
+    target_link_libraries(cista INTERFACE mimalloc-static)
     target_compile_definitions(cista INTERFACE CISTA_USE_MIMALLOC=1)
     target_compile_definitions(boost INTERFACE BOOST_ASIO_DISABLE_STD_ALIGNED_ALLOC=1)
 endif()
@@ -96,10 +78,6 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
             -Wno-thread-safety-negative
             -Wno-unused-private-field
             -Werror)
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    set(motis-compile-options -Wall -Wextra -Werror -Wno-unknown-pragmas -Wno-deprecated-declarations)
-elseif (MSVC)
-    set(motis-compile-options /WX /bigobj)
 else ()
     set(motis-compile-options
             -Wall
@@ -168,10 +146,6 @@ target_link_libraries(motis
     address_formatting_res-res
 )
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-    target_link_options(motis PRIVATE -Wl,-no_deduplicate)
-endif()
-
 # --- TEST ---
 add_library(motis-generated INTERFACE)
 target_include_directories(motis-generated INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/generated)
@@ -195,41 +169,6 @@ file (CREATE_LINK ${CMAKE_SOURCE_DIR}/deps/tiles/profile ${CMAKE_BINARY_DIR}/til
 if (MOTIS_MIMALLOC)
     target_link_libraries(motis ${motis-mimalloc-lib})
     target_compile_definitions(motis PUBLIC USE_MIMALLOC=1)
-    if(WIN32)
-        add_custom_command(
-                TARGET motis POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy
-                $<TARGET_FILE:mimalloc>
-                $<TARGET_FILE_DIR:motis>
-                COMMENT "Copy mimalloc.dll to output directory"
-        )
-        add_custom_command(
-                TARGET motis POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy
-                "${CMAKE_SOURCE_DIR}/deps/mimalloc/bin/mimalloc-redirect.dll"
-                $<TARGET_FILE_DIR:motis>
-                COMMENT "Copy mimalloc-redirect.dll to output directory"
-        )
-        add_custom_command(
-                TARGET motis POST_BUILD
-                COMMAND "${CMAKE_SOURCE_DIR}/deps/mimalloc/bin/minject.exe"
-                --force --inplace
-                $<$<CONFIG:Debug>:--postfix=debug>
-                $<TARGET_FILE:motis>
-                COMMENT "Ensure mimalloc.dll is loaded first"
-        )
-        add_custom_command(
-                TARGET motis-portable POST_BUILD
-                COMMAND "${CMAKE_SOURCE_DIR}/deps/mimalloc/bin/minject.exe"
-                --force --inplace
-                $<$<CONFIG:Debug>:--postfix=debug>
-                $<TARGET_FILE:motis-portable>
-                COMMENT "Ensure mimalloc.dll is loaded first"
-        )
-    endif()
-    if (MSVC)
-        target_link_options(motis PUBLIC "/include:mi_version")
-    endif ()
 endif()
 
 

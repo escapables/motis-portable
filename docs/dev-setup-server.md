@@ -2,8 +2,6 @@
 
 1. Build `motis`. Refer to the respective documentation if necessary:
    - [for Linux](linux-dev-setup.md)
-   - [for Windows](windows-dev-setup.md)
-   - [for macOS](macos-dev-setup.md)
 
 
 2. Build the UI:
