@@ -31,6 +31,11 @@ type StockholmRailInfo = {
 	direction?: string;
 };
 
+type StockholmBusInfo = {
+	line: string;
+	direction?: string;
+};
+
 type GothenburgTramInfo = {
 	line?: GothenburgTramLine;
 	serviceName: 'Göteborgs spårvagn';
@@ -39,6 +44,7 @@ type GothenburgTramInfo = {
 };
 
 const STOCKHOLM_SL_AGENCY_IDS = new Set(['500000000000000114', '505000000000000001']);
+const STOCKHOLM_FERRY_ROUTE_SHORT_NAMES = new Set(['80', '82', '83', '84', '85', '89']);
 const VASTTRAFIK_AGENCY_NAME_MATCH = 'vasttrafik';
 const GOTHENBURG_TRAM_COLOR = '#0069b4';
 
@@ -84,8 +90,15 @@ const parseMetroLine = (routeShortName?: string): MetroLine | undefined => {
 
 const parseRailLine = (routeShortName?: string): RailLine | undefined => {
 	const line = routeShortName?.trim();
-	if (line === '25' || line === '26' || line === '27' || line === '28' || line === '29') {
-		return line;
+	const normalized = line?.match(/^(\d{2})(?:[A-Za-z])?$/)?.[1] ?? line;
+	if (
+		normalized === '25' ||
+		normalized === '26' ||
+		normalized === '27' ||
+		normalized === '28' ||
+		normalized === '29'
+	) {
+		return normalized;
 	}
 	return undefined;
 };
@@ -252,6 +265,33 @@ export const getStockholmRailDisplayName = (leg: StockholmMetroLegLike): string 
 	return info.direction
 		? `${info.serviceName}${line} mot ${info.direction}`
 		: `${info.serviceName}${line}`;
+};
+
+export const getStockholmBusInfo = (leg: StockholmMetroLegLike): StockholmBusInfo | undefined => {
+	if (leg.mode !== 'FERRY' || !isStockholmSlContext(leg)) {
+		return undefined;
+	}
+
+	const line = normalizeText(leg.routeShortName);
+	if (!line || STOCKHOLM_FERRY_ROUTE_SHORT_NAMES.has(line)) {
+		return undefined;
+	}
+
+	// Metro and local rail are handled by dedicated normalizers.
+	if (parseMetroLine(line) || parseRailLine(line)) {
+		return undefined;
+	}
+
+	const direction = normalizeText(leg.tripTo?.name) ?? normalizeText(leg.headsign);
+	return { line, direction };
+};
+
+export const getStockholmBusDisplayName = (leg: StockholmMetroLegLike): string | undefined => {
+	const info = getStockholmBusInfo(leg);
+	if (!info) {
+		return undefined;
+	}
+	return info.direction ? `${info.line} mot ${info.direction}` : info.line;
 };
 
 export const getGothenburgTramInfo = (

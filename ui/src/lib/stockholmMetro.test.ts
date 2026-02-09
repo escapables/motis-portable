@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	getStockholmBusInfo,
 	getGothenburgTramDisplayName,
 	getGothenburgTramInfo,
 	getStockholmMetroDisplayName,
@@ -34,6 +35,42 @@ describe('city transit normalization helpers', () => {
 		const info = getStockholmRailInfo(leg);
 		expect(info?.serviceName).toBe('Roslagsbanan');
 		expect(getStockholmRailDisplayName(leg)).toContain('Roslagsbanan 27');
+	});
+
+	it('detects Stockholm local rail lines with suffix variants (e.g. 28S)', () => {
+		const leg = {
+			mode: 'FERRY',
+			routeShortName: '28S',
+			agencyId: '500000000000000114',
+			headsign: 'Österskär'
+		} as const;
+
+		const info = getStockholmRailInfo(leg);
+		expect(info?.serviceName).toBe('Roslagsbanan');
+		expect(getStockholmRailDisplayName(leg)).toContain('Roslagsbanan 28');
+	});
+
+	it('detects Stockholm bus lines misclassified as ferry', () => {
+		const leg = {
+			mode: 'FERRY',
+			routeShortName: '4',
+			agencyId: '500000000000000114',
+			headsign: 'Radiohuset'
+		} as const;
+
+		const info = getStockholmBusInfo(leg);
+		expect(info?.line).toBe('4');
+	});
+
+	it('does not remap known Stockholm ferry lines to bus', () => {
+		const leg = {
+			mode: 'FERRY',
+			routeShortName: '82',
+			agencyId: '500000000000000114',
+			headsign: 'Djurgården'
+		} as const;
+
+		expect(getStockholmBusInfo(leg)).toBeUndefined();
 	});
 
 	it('detects Gothenburg tram lines in Västtrafik context', () => {

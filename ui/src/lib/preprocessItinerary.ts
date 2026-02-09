@@ -11,6 +11,8 @@ import type { RequestResult } from '@hey-api/client-fetch';
 import {
 	getGothenburgTramDisplayName,
 	getGothenburgTramInfo,
+	getStockholmBusDisplayName,
+	getStockholmBusInfo,
 	getStockholmMetroDisplayName,
 	getStockholmMetroInfo,
 	getStockholmRailDisplayName,
@@ -60,6 +62,14 @@ export const preprocessItinerary = (from: Location, to: Location) => {
 			// Normalize misclassified SL local rail legs so they don't appear as ferries.
 			leg.mode = 'RAIL';
 			leg.displayName = getStockholmRailDisplayName(leg) ?? leg.displayName;
+			return;
+		}
+
+		const busInfo = getStockholmBusInfo(leg);
+		if (busInfo && leg.mode === 'FERRY') {
+			// Normalize misclassified SL bus legs so they don't appear as ferries.
+			leg.mode = 'BUS';
+			leg.displayName = getStockholmBusDisplayName(leg) ?? leg.displayName;
 			return;
 		}
 
