@@ -2,7 +2,16 @@
 
 # (`escapables/motis-portable`)
 
-This fork targets one primary outcome: a portable offline Linux desktop app that runs MOTIS without browser localhost access.
+This fork is a substantial refactor of upstream `motis`, focused on a Linux-only, portable offline desktop runtime (Tauri + IPC, no browser-localhost dependency in native mode).
+
+Current divergence against upstream (`motis-project/motis` at `2c8e946f`, 2026-02-08):
+
+- `95 files changed`
+- `11,806 insertions`
+- `924 deletions`
+- `+10,882 net lines`
+
+This quantifies the code-level migration from upstream server-first workflows toward the portable USB-first Linux application model used in this fork.
 
 ## Supported Runtime Model
 
