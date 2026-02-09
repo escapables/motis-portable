@@ -18,7 +18,9 @@ describe('city transit normalization helpers', () => {
 
 		const info = getStockholmMetroInfo(leg);
 		expect(info?.line).toBe('14');
-		expect(getStockholmMetroDisplayName({ ...leg, headsign: 'Mörby centrum' })).toContain('Röda linjen');
+		expect(getStockholmMetroDisplayName({ ...leg, headsign: 'Mörby centrum' })).toBe(
+			'14 mot Mörby centrum'
+		);
 	});
 
 	it('detects Stockholm local rail lines and display naming', () => {

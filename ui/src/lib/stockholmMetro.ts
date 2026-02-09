@@ -216,9 +216,7 @@ export const getStockholmMetroDisplayName = (leg: StockholmMetroLegLike): string
 	if (!info) {
 		return undefined;
 	}
-	return info.direction
-		? `${info.lineName} ${info.line} mot ${info.direction}`
-		: `${info.lineName} ${info.line}`;
+	return info.direction ? `${info.line} mot ${info.direction}` : info.line;
 };
 
 export const getStockholmRailInfo = (leg: StockholmMetroLegLike): StockholmRailInfo | undefined => {
