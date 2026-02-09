@@ -60,9 +60,7 @@
 	};
 
 	$effect(() => {
-		const filtered = vias
-			.filter((v) => isValidViaStop(v.match))
-			.map((v) => $state.snapshot(v));
+		const filtered = vias.filter((v) => isValidViaStop(v.match)).map((v) => $state.snapshot(v));
 
 		const oldVia = $state.snapshot(via);
 		const nextVia = filtered.length > 0 ? filtered.map((f) => f.match) : undefined;

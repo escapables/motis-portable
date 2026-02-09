@@ -55,9 +55,7 @@
 
 	const getPrimaryMode = (modes?: Mode[]): Mode | undefined => {
 		if (!modes || modes.length === 0) return undefined;
-		return modes
-			.slice()
-			.sort((a, b) => (MODE_PRIORITY[b] ?? 0) - (MODE_PRIORITY[a] ?? 0))[0];
+		return modes.slice().sort((a, b) => (MODE_PRIORITY[b] ?? 0) - (MODE_PRIORITY[a] ?? 0))[0];
 	};
 
 	const isTransitCategory = (category?: string): boolean => {
@@ -323,15 +321,15 @@
 					<Combobox.Item
 						class="flex w-full cursor-default select-none rounded-sm py-4 pl-4 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50"
 						value={JSON.stringify(item.match)}
-							label={item.label}
-						>
-							<div class="flex items-center grow">
-								<span class="inline-flex h-6 w-6 items-center justify-center text-base leading-none">
-									{getMatchEmoji(item.match)}
-								</span>
-								<div class="flex flex-col ml-4">
-									<span class="font-semibold text-nowrap text-ellipsis overflow-hidden">
-										{item.match?.name}
+						label={item.label}
+					>
+						<div class="flex items-center grow">
+							<span class="inline-flex h-6 w-6 items-center justify-center text-base leading-none">
+								{getMatchEmoji(item.match)}
+							</span>
+							<div class="flex flex-col ml-4">
+								<span class="font-semibold text-nowrap text-ellipsis overflow-hidden">
+									{item.match?.name}
 								</span>
 								<span class="text-muted-foreground text-nowrap text-ellipsis overflow-hidden">
 									{getDisplayArea(item.match)}

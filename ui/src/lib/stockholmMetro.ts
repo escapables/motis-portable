@@ -177,17 +177,16 @@ const inferGothenburgTramByText = (
 		if (!normalized) {
 			continue;
 		}
-		if (
-			normalized.includes('sparvagn') ||
-			normalized.includes('tram')
-		) {
+		if (normalized.includes('sparvagn') || normalized.includes('tram')) {
 			return true;
 		}
 	}
 	return false;
 };
 
-export const getStockholmMetroInfo = (leg: StockholmMetroLegLike): StockholmMetroInfo | undefined => {
+export const getStockholmMetroInfo = (
+	leg: StockholmMetroLegLike
+): StockholmMetroInfo | undefined => {
 	if (!leg.mode || (leg.mode !== 'SUBWAY' && leg.mode !== 'FERRY')) {
 		return undefined;
 	}
@@ -255,7 +254,9 @@ export const getStockholmRailDisplayName = (leg: StockholmMetroLegLike): string 
 		: `${info.serviceName}${line}`;
 };
 
-export const getGothenburgTramInfo = (leg: StockholmMetroLegLike): GothenburgTramInfo | undefined => {
+export const getGothenburgTramInfo = (
+	leg: StockholmMetroLegLike
+): GothenburgTramInfo | undefined => {
 	if (!leg.mode || (leg.mode !== 'FERRY' && leg.mode !== 'TRAM')) {
 		return undefined;
 	}
@@ -278,9 +279,7 @@ export const getGothenburgTramInfo = (leg: StockholmMetroLegLike): GothenburgTra
 	};
 };
 
-export const getGothenburgTramDisplayName = (
-	leg: StockholmMetroLegLike
-): string | undefined => {
+export const getGothenburgTramDisplayName = (leg: StockholmMetroLegLike): string | undefined => {
 	const info = getGothenburgTramInfo(leg);
 	if (!info) {
 		return undefined;

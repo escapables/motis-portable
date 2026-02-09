@@ -1,5 +1,9 @@
 import type { Mode, Rental } from '@motis-project/motis-client';
-import { getGothenburgTramInfo, getStockholmMetroInfo, getStockholmRailInfo } from './stockholmMetro';
+import {
+	getGothenburgTramInfo,
+	getStockholmMetroInfo,
+	getStockholmRailInfo
+} from './stockholmMetro';
 
 export type Colorable = { routeColor?: string; routeTextColor?: string; mode: Mode };
 

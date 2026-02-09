@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteDate } from 'svelte/reactivity';
 	import { cn } from './utils';
 
 	let {
@@ -16,8 +17,7 @@
 		'flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
 
 	function toLocalParts(current: Date): { date: string; time: string } {
-		const local = new Date(current.getTime() - current.getTimezoneOffset() * 60000)
-			.toISOString();
+		const local = new Date(current.getTime() - current.getTimezoneOffset() * 60000).toISOString();
 		return { date: local.slice(0, 10), time: local.slice(11, 16) };
 	}
 
@@ -38,7 +38,7 @@
 		) {
 			return;
 		}
-		value = new Date(year, month - 1, day, hours, minutes, 0, 0);
+		value = new SvelteDate(year, month - 1, day, hours, minutes, 0, 0);
 	}
 
 	$effect(() => {

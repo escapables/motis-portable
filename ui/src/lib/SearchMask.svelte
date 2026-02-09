@@ -79,7 +79,6 @@
 
 	let fromItems = $state<Array<Location>>([]);
 	let toItems = $state<Array<Location>>([]);
-
 </script>
 
 <div id="searchmask-container" class="flex flex-col space-y-4 p-4 relative">

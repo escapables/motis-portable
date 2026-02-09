@@ -1084,7 +1084,7 @@
 		<div class="maplibregl-ctrl-{isSmallScreen ? 'top-left' : 'bottom-right'}">
 			<div class="maplibregl-ctrl maplibregl-ctrl-attrib">
 				<div class="maplibregl-ctrl-attrib-inner">
-						&copy; Stig
+					&copy; Stig
 					{#if dataAttributionLink}
 						|
 						<a href={dataAttributionLink} target="_blank" rel="noopener noreferrer">

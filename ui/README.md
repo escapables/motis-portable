@@ -38,12 +38,15 @@ The UI applies a small normalization pass before rendering itinerary legs so mis
 ### Active Rules
 
 1. Stockholm (SL) metro:
+
 - If `mode = FERRY` and line is `10/11/13/14/17/18/19` in SL context, map to `SUBWAY`.
 
 2. Stockholm (SL) local rail:
+
 - If `mode = FERRY` and line is `25-29` (or text indicates `Roslagsbanan`/`Saltsjöbanan`) in SL context, map to `RAIL`.
 
 3. Gothenburg (Västtrafik) tram:
+
 - If `mode = FERRY` and Västtrafik context + tram line hint (`1-11` or `13`, or tram text hint), map to `TRAM`.
 
 ### Fallback Behavior

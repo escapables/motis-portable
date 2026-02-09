@@ -194,7 +194,9 @@ const detectInitialLanguage = (): SupportedLanguage => {
 		return DEFAULT_LANGUAGE;
 	}
 
-	const urlLanguage = normalizeLanguage(new URLSearchParams(window.location.search).get('language'));
+	const urlLanguage = normalizeLanguage(
+		new URLSearchParams(window.location.search).get('language')
+	);
 	if (urlLanguage) {
 		return urlLanguage;
 	}
@@ -275,7 +277,11 @@ if (browser) {
 		const current = normalizeLanguage(url.searchParams.get('language'));
 		if (current !== nextLanguage) {
 			url.searchParams.set('language', nextLanguage);
-			window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+			window.history.replaceState(
+				window.history.state,
+				'',
+				`${url.pathname}${url.search}${url.hash}`
+			);
 		}
 	});
 }
