@@ -25,6 +25,10 @@ config.ini
 
 # --- Local development artifacts (portable GUI work) ---
 .pnpm-store/
+/coverage/
+/node_modules/
+/package.json
+/package-lock.json
 gui-svelte/node_modules/
 gui-svelte/src-tauri/target/
 usb-bundle/
