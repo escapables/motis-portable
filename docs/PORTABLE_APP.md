@@ -2,8 +2,6 @@
 
 This document is the repository-owned source of truth for the portable desktop runtime.
 
-Use this as the long-term technical context for the fork, especially if `AGENTS.md` is moved out of the repository.
-
 ## Scope
 
 - Linux-only portable desktop runtime.
