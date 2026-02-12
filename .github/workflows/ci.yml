@@ -131,7 +131,10 @@ jobs:
       # ==== TESTS ====
       - name: Run Integration Tests
         run: ${{ matrix.config.emulator }} build/motis-portable
-
+      
+      - name: Ensure pip is installed
+        run: apt-get update && apt-get install -y python3-pip
+        
       - name: Generate Coverage Report
         if: matrix.config.preset == 'linux-debug'
         run: |
