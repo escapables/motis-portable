@@ -147,7 +147,7 @@ jobs:
       - name: install venv
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3-venv llvm-21-tools
+          apt-get install -y --no-install-recommends python3-venv llvm-21-tools curl gnupg
 
       - name: Generate Coverage Report
         if: matrix.config.preset == 'linux-debug'
