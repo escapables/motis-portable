@@ -7,6 +7,7 @@
 *.zip
 *.bin
 *.pbf
+!test/resources/test_case.osm.pbf
 *.csv
 /osr
 /delfi
