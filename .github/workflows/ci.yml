@@ -153,10 +153,8 @@ jobs:
         if: matrix.config.preset == 'linux-debug'
         run: |
           python3 -m venv /tmp/venv
-          source /tmp/venv/bin/activate
-          pip install gcovr
-          export PATH="/tmp/venv/bin:$PATH"
-          gcovr \
+          /tmp/venv/bin/pip install gcovr
+          /tmp/venv/bin/gcovr \
             --root . \
             --object-directory build \
             --xml-pretty \
