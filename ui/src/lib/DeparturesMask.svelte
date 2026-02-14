@@ -4,14 +4,39 @@
 	import { t } from '$lib/i18n/translation';
 	import { onClickStop } from '$lib/utils';
 
-	let {
-		time = $bindable()
+let {
+		from = $bindable(),
+		time = $bindable(),
+		active = false
 	}: {
+		from: Location;
 		time: Date;
+		active?: boolean;
 	} = $props();
 
-	let from = $state<Location>() as Location;
 	let fromItems = $state<Array<Location>>([]);
+	let lastAutoSelectedStopKey = $state<string>('');
+
+	const selectStop = (location: Location) => {
+		if (!location.match || location.match.type !== 'STOP' || !location.match.id) {
+			return;
+		}
+		const stopName = location.label || location.match.name || location.match.id;
+		const stopKey = `${location.match.id}|${time.toISOString()}`;
+		lastAutoSelectedStopKey = stopKey;
+		onClickStop(stopName, location.match.id, time);
+	};
+
+	$effect(() => {
+		if (!active || !from?.match || from.match.type !== 'STOP' || !from.match.id) {
+			return;
+		}
+		const stopKey = `${from.match.id}|${time.toISOString()}`;
+		if (stopKey === lastAutoSelectedStopKey) {
+			return;
+		}
+		selectStop(from);
+	});
 </script>
 
 <div id="searchmask-container" class="flex flex-col space-y-4 p-4 relative">
@@ -22,9 +47,7 @@
 		bind:items={fromItems}
 		type="STOP"
 		onChange={(location) => {
-			if (location.match) {
-				onClickStop(location.label, location.match.id, time);
-			}
+			selectStop(location);
 		}}
 	/>
 </div>

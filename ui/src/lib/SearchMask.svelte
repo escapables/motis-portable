@@ -79,9 +79,9 @@
 </script>
 
 <div id="searchmask-container" class="flex flex-col space-y-4 p-4 relative">
-	<div class="space-y-2">
-		<div class="flex items-center gap-2">
-			<div class="min-w-0 flex-1">
+	<div class="relative pr-12">
+		<div class="space-y-2">
+			<div class="relative">
 				<AddressTypeahead
 					place={geocodingBiasPlace}
 					name="from"
@@ -89,23 +89,22 @@
 					bind:selected={from}
 					bind:items={fromItems}
 					{transitModes}
+					trailingControl={true}
 				/>
+				<Button
+					variant={mapClickTarget == 'from' ? 'default' : 'outline'}
+					size="icon"
+					class="absolute right-1 top-1/2 z-10 h-7 w-7 -translate-y-1/2"
+					data-testid="from-map-pin"
+					aria-label={`Set ${$t.from} from map`}
+					onclick={() => {
+						mapClickTarget = mapClickTarget == 'from' ? undefined : 'from';
+					}}
+				>
+					📍
+				</Button>
 			</div>
-			<Button
-				variant={mapClickTarget == 'from' ? 'default' : 'outline'}
-				size="icon"
-				class="shrink-0"
-				data-testid="from-map-pin"
-				aria-label={`Set ${$t.from} from map`}
-				onclick={() => {
-					mapClickTarget = mapClickTarget == 'from' ? undefined : 'from';
-				}}
-			>
-				📍
-			</Button>
-		</div>
-		<div class="flex items-center gap-2">
-			<div class="min-w-0 flex-1">
+			<div class="relative">
 				<AddressTypeahead
 					place={geocodingBiasPlace}
 					name="to"
@@ -113,38 +112,39 @@
 					bind:selected={to}
 					bind:items={toItems}
 					{transitModes}
+					trailingControl={true}
 				/>
+				<Button
+					variant={mapClickTarget == 'to' ? 'default' : 'outline'}
+					size="icon"
+					class="absolute right-1 top-1/2 z-10 h-7 w-7 -translate-y-1/2"
+					data-testid="to-map-pin"
+					aria-label={`Set ${$t.to} from map`}
+					onclick={() => {
+						mapClickTarget = mapClickTarget == 'to' ? undefined : 'to';
+					}}
+				>
+					📍
+				</Button>
 			</div>
-			<Button
-				variant={mapClickTarget == 'to' ? 'default' : 'outline'}
-				size="icon"
-				class="shrink-0"
-				data-testid="to-map-pin"
-				aria-label={`Set ${$t.to} from map`}
-				onclick={() => {
-					mapClickTarget = mapClickTarget == 'to' ? undefined : 'to';
-				}}
-			>
-				📍
-			</Button>
 		</div>
-	</div>
-	<Button
-		class="absolute z-10 right-16 top-10"
-		variant="outline"
-		size="icon"
-		onclick={() => {
-			const tmp = to;
-			to = from;
-			from = tmp;
+		<Button
+			class="absolute right-0 top-1/2 z-10 -translate-y-1/2"
+			variant="outline"
+			size="icon"
+			onclick={() => {
+				const tmp = to;
+				to = from;
+				from = tmp;
 
-			const tmpItems = toItems;
-			toItems = fromItems;
-			fromItems = tmpItems;
-		}}
-	>
-		<ArrowUpDown class="w-5 h-5" />
-	</Button>
+				const tmpItems = toItems;
+				toItems = fromItems;
+				fromItems = tmpItems;
+			}}
+		>
+			<ArrowUpDown class="w-5 h-5" />
+		</Button>
+	</div>
 	<div class="flex flex-row gap-2 flex-wrap">
 		<DateInput bind:value={time} />
 		<RadioGroup.Root

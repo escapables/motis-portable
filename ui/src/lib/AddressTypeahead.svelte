@@ -15,6 +15,7 @@
 		place,
 		type,
 		allowCoordinateInput = true,
+		trailingControl = false,
 		matchFilter = () => true,
 		transitModes,
 		onChange = () => {}
@@ -26,6 +27,7 @@
 		place?: maplibregl.LngLatLike;
 		type?: undefined | LocationType;
 		allowCoordinateInput?: boolean;
+		trailingControl?: boolean;
 		matchFilter?: (match: Match) => boolean;
 		transitModes?: Mode[];
 		onChange?: (location: Location) => void;
@@ -348,7 +350,7 @@
 			{placeholder}
 			{name}
 			bind:ref
-			class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 pr-9 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+			class={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${trailingControl ? 'pr-16' : 'pr-9'}`}
 			autocomplete="off"
 			oninput={(e: Event) => (inputValue = (e.currentTarget as HTMLInputElement).value)}
 			aria-label={placeholder}
@@ -356,7 +358,7 @@
 		/>
 		{#if loading}
 			<div
-				class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-muted-foreground"
+				class={`pointer-events-none absolute inset-y-0 flex items-center text-muted-foreground ${trailingControl ? 'right-10' : 'right-2'}`}
 			>
 				<LoaderCircle class="h-4 w-4 animate-spin" />
 			</div>

@@ -380,11 +380,14 @@
 			Math.min(defaultQuery.maxPreTransitTime, serverConfig?.maxPrePostTransitTimeLimit ?? Infinity)
 		)
 	);
+	const DEFAULT_ISOCHRONES_MAX_POST_TRANSIT_TIME = 5 * 60;
 	let maxPostTransitTime = $derived<number>(
 		parseIntOr(
 			urlParams?.get('maxPostTransitTime'),
 			Math.min(
-				defaultQuery.maxPostTransitTime,
+				activeTab == 'isochrones'
+					? DEFAULT_ISOCHRONES_MAX_POST_TRANSIT_TIME
+					: defaultQuery.maxPostTransitTime,
 				serverConfig?.maxPrePostTransitTimeLimit ?? Infinity
 			)
 		)
@@ -794,6 +797,13 @@
 			bind:value={
 				() => activeTab,
 				(v) => {
+					const previousTab = activeTab;
+					if (v === 'isochrones' && from?.match) {
+						one = from;
+					}
+					if (previousTab === 'isochrones' && v !== 'isochrones' && one?.match) {
+						from = one;
+					}
 					activeTab = v;
 					pushState('', { activeTab: v });
 				}
@@ -839,7 +849,7 @@
 			</Tabs.Content>
 			<Tabs.Content value="departures">
 				<Card class="overflow-y-auto overflow-x-hidden bg-background rounded-lg">
-					<DeparturesMask bind:time />
+					<DeparturesMask bind:from bind:time active={activeTab == 'departures'} />
 				</Card>
 			</Tabs.Content>
 			<Tabs.Content value="isochrones">
