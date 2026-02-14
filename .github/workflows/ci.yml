@@ -56,6 +56,18 @@ jobs:
         working-directory: ui
         run: pnpm run check
 
+      - name: Unit Tests
+        working-directory: ui
+        run: pnpm run test:unit --run
+
+      - name: Install Playwright Chromium
+        working-directory: ui
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Integration Smoke Tests
+        working-directory: ui
+        run: pnpm run test:integration:smoke
+
   formatting:
     runs-on: ubuntu-latest
     container: ghcr.io/motis-project/docker-cpp-build
@@ -133,7 +145,9 @@ jobs:
         run: ${{ matrix.config.emulator }} build/motis-portable
      
       - name: install venv
-        run: apt install python3.12-venv
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-venv
 
       - name: Generate Coverage Report
         if: matrix.config.preset == 'linux-debug'

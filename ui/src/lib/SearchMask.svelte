@@ -16,6 +16,7 @@
 	import DateInput from '$lib/DateInput.svelte';
 	import type { Location } from '$lib/Location';
 	import type { PrePostDirectMode } from '$lib/Modes';
+	type ConnectionsMapClickTarget = 'from' | 'to';
 
 	let {
 		geocodingBiasPlace,
@@ -42,7 +43,8 @@
 		ignoreDirectRentalReturnConstraints = $bindable(),
 		preTransitProviderGroups = $bindable(),
 		postTransitProviderGroups = $bindable(),
-		directProviderGroups = $bindable()
+		directProviderGroups = $bindable(),
+		mapClickTarget = $bindable<ConnectionsMapClickTarget | undefined>(undefined)
 	}: {
 		geocodingBiasPlace?: maplibregl.LngLatLike;
 		serverConfig: ServerConfig | undefined;
@@ -69,6 +71,7 @@
 		preTransitProviderGroups: string[];
 		postTransitProviderGroups: string[];
 		directProviderGroups: string[];
+		mapClickTarget: ConnectionsMapClickTarget | undefined;
 	} = $props();
 
 	let fromItems = $state<Array<Location>>([]);
@@ -76,24 +79,58 @@
 </script>
 
 <div id="searchmask-container" class="flex flex-col space-y-4 p-4 relative">
-	<AddressTypeahead
-		place={geocodingBiasPlace}
-		name="from"
-		placeholder={$t.from}
-		bind:selected={from}
-		bind:items={fromItems}
-		{transitModes}
-	/>
-	<AddressTypeahead
-		place={geocodingBiasPlace}
-		name="to"
-		placeholder={$t.to}
-		bind:selected={to}
-		bind:items={toItems}
-		{transitModes}
-	/>
+	<div class="space-y-2">
+		<div class="flex items-center gap-2">
+			<div class="min-w-0 flex-1">
+				<AddressTypeahead
+					place={geocodingBiasPlace}
+					name="from"
+					placeholder={$t.from}
+					bind:selected={from}
+					bind:items={fromItems}
+					{transitModes}
+				/>
+			</div>
+			<Button
+				variant={mapClickTarget == 'from' ? 'default' : 'outline'}
+				size="icon"
+				class="shrink-0"
+				data-testid="from-map-pin"
+				aria-label={`Set ${$t.from} from map`}
+				onclick={() => {
+					mapClickTarget = mapClickTarget == 'from' ? undefined : 'from';
+				}}
+			>
+				📍
+			</Button>
+		</div>
+		<div class="flex items-center gap-2">
+			<div class="min-w-0 flex-1">
+				<AddressTypeahead
+					place={geocodingBiasPlace}
+					name="to"
+					placeholder={$t.to}
+					bind:selected={to}
+					bind:items={toItems}
+					{transitModes}
+				/>
+			</div>
+			<Button
+				variant={mapClickTarget == 'to' ? 'default' : 'outline'}
+				size="icon"
+				class="shrink-0"
+				data-testid="to-map-pin"
+				aria-label={`Set ${$t.to} from map`}
+				onclick={() => {
+					mapClickTarget = mapClickTarget == 'to' ? undefined : 'to';
+				}}
+			>
+				📍
+			</Button>
+		</div>
+	</div>
 	<Button
-		class="absolute z-10 right-4 top-6"
+		class="absolute z-10 right-16 top-10"
 		variant="outline"
 		size="icon"
 		onclick={() => {

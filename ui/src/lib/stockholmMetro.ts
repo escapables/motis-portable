@@ -297,16 +297,22 @@ export const getStockholmBusDisplayName = (leg: StockholmMetroLegLike): string |
 export const getGothenburgTramInfo = (
 	leg: StockholmMetroLegLike
 ): GothenburgTramInfo | undefined => {
-	if (!leg.mode || (leg.mode !== 'FERRY' && leg.mode !== 'TRAM')) {
+	if (!leg.mode || (leg.mode !== 'FERRY' && leg.mode !== 'TRAM' && leg.mode !== 'BUS')) {
 		return undefined;
 	}
 
-	if (leg.mode === 'FERRY' && !isVasttrafikContext(leg)) {
+	const isTramLikeByText = inferGothenburgTramByText(leg);
+
+	if (leg.mode === 'BUS' && !isTramLikeByText) {
+		return undefined;
+	}
+
+	if (leg.mode !== 'TRAM' && !isVasttrafikContext(leg)) {
 		return undefined;
 	}
 
 	const line = parseGothenburgTramLine(leg.routeShortName);
-	if (!line && !inferGothenburgTramByText(leg)) {
+	if (!line && !isTramLikeByText) {
 		return undefined;
 	}
 

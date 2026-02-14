@@ -13,6 +13,7 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:integration": "playwright test",
+		"test:integration:smoke": "playwright test --workers=1 --grep @smoke",
 		"test:unit": "vitest",
 		"update-sprite": "spreet sprite --sdf static/sprite_sdf && spreet --sdf --retina sprite static/sprite_sdf@2x",
 		"update-api": "pnpm --filter @motis-project/motis-client build"

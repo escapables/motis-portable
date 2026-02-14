@@ -58,8 +58,8 @@ export const preprocessItinerary = (from: Location, to: Location) => {
 		}
 
 		const railInfo = getStockholmRailInfo(leg);
-		if (railInfo && leg.mode === 'FERRY') {
-			// Normalize misclassified SL local rail legs so they don't appear as ferries.
+		if (railInfo && (leg.mode === 'FERRY' || leg.mode === 'SUBURBAN')) {
+			// Normalize misclassified SL local rail legs so they use rail icon/wording.
 			leg.mode = 'RAIL';
 			leg.displayName = getStockholmRailDisplayName(leg) ?? leg.displayName;
 			return;
@@ -78,8 +78,8 @@ export const preprocessItinerary = (from: Location, to: Location) => {
 			return;
 		}
 
-		// Normalize misclassified Västtrafik tram legs so they render as tram instead of ferry.
-		if (leg.mode === 'FERRY') {
+		// Normalize misclassified Västtrafik tram legs so they render as tram.
+		if (leg.mode === 'FERRY' || leg.mode === 'BUS') {
 			leg.mode = 'TRAM';
 		}
 		leg.displayName = getGothenburgTramDisplayName(leg) ?? leg.displayName;

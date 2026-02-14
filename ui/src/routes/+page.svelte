@@ -85,6 +85,8 @@
 	let dataAttributionLink: string | undefined = $state(undefined);
 	let colorMode = $state<'rt' | 'route' | 'mode' | 'none'>('none');
 	let showMap = $state(!isSmallScreen);
+	type ConnectionsMapClickTarget = 'from' | 'to';
+	let mapClickTarget = $state<ConnectionsMapClickTarget | undefined>(undefined);
 	let lastOneToAllQuery: OneToAllData | undefined = undefined;
 	let lastPlanQuery: PlanData | undefined = undefined;
 	let serverConfig: ServerConfig | undefined = $state();
@@ -686,6 +688,20 @@
 		map?.flyTo({ center: location.match, zoom: 11 });
 	};
 
+	const setConnectionsLocationFromMap = (
+		target: ConnectionsMapClickTarget,
+		lngLat: maplibregl.LngLat
+	) => {
+		const location = posToLocation(lngLat, zoom > LEVEL_MIN_ZOOM ? level : undefined);
+		if (target === 'from') {
+			from = location;
+			fromMarker?.setLngLat(location.match!);
+			return;
+		}
+		to = location;
+		toMarker?.setLngLat(location.match!);
+	};
+
 	const flyToSelectedItinerary = () => {
 		if (page.state.selectedItinerary && map) {
 			flyToItineraries([page.state.selectedItinerary], map);
@@ -702,6 +718,26 @@
 				flyToLocation(one);
 			}
 		}
+	});
+
+	$effect(() => {
+		if (activeTab != 'connections') {
+			mapClickTarget = undefined;
+		}
+	});
+
+	$effect(() => {
+		if (!map || activeTab != 'connections' || !mapClickTarget) return;
+		const mapInstance = map;
+		const clickTarget = mapClickTarget;
+		const handleMapClick = (e: maplibregl.MapMouseEvent) => {
+			setConnectionsLocationFromMap(clickTarget, e.lngLat);
+			mapClickTarget = undefined;
+		};
+		mapInstance.on('click', handleMapClick);
+		return () => {
+			mapInstance.off('click', handleMapClick);
+		};
 	});
 
 	$effect(() => {
@@ -723,8 +759,7 @@
 		<Button
 			variant="outline"
 			onclick={() => {
-				from = posToLocation(e.lngLat, zoom > LEVEL_MIN_ZOOM ? level : undefined);
-				fromMarker?.setLngLat(from.match!);
+				setConnectionsLocationFromMap('from', e.lngLat);
 				close();
 			}}
 		>
@@ -733,8 +768,7 @@
 		<Button
 			variant="outline"
 			onclick={() => {
-				to = posToLocation(e.lngLat, zoom > LEVEL_MIN_ZOOM ? level : undefined);
-				toMarker?.setLngLat(to.match!);
+				setConnectionsLocationFromMap('to', e.lngLat);
 				close();
 			}}
 		>
@@ -778,6 +812,7 @@
 						{serverConfig}
 						bind:from
 						bind:to
+						bind:mapClickTarget
 						bind:time
 						bind:arriveBy
 						bind:useRoutedTransfers

@@ -96,4 +96,30 @@ describe('city transit normalization helpers', () => {
 
 		expect(getGothenburgTramInfo(leg)).toBeUndefined();
 	});
+
+	it('detects Gothenburg tram legs misclassified as bus when tram text is present', () => {
+		const leg = {
+			mode: 'BUS',
+			routeShortName: '6',
+			agencyName: 'Västtrafik',
+			routeLongName: 'Spårvagn',
+			headsign: 'Kortedala'
+		} as const;
+
+		const info = getGothenburgTramInfo(leg);
+		expect(info?.line).toBe('6');
+		expect(getGothenburgTramDisplayName(leg)).toBe('Spårvagn 6 mot Kortedala');
+	});
+
+	it('does not remap Gothenburg bus legs without tram text', () => {
+		const leg = {
+			mode: 'BUS',
+			routeShortName: '16',
+			agencyName: 'Västtrafik',
+			routeLongName: 'Buss',
+			headsign: 'Eketrägatan'
+		} as const;
+
+		expect(getGothenburgTramInfo(leg)).toBeUndefined();
+	});
 });
