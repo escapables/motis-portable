@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed isochrones default last-leg time (`Sista sträckan`) from 15 minutes to 5 minutes when no explicit `maxPostTransitTime` is set.
 - Improved tab carry-over between Trips, Departures, and Isochrones by synchronizing selected location state in both directions on tab switch.
 - Improved Departures behavior for carried-over locations: when a `STOP` location is already selected, Departures now auto-resolves by stop ID without forcing manual retyping/reselection.
+- Fixed repeated tab switching loss of Departures `stopId` by aligning auto-select dedupe with live `page.state.selectedStop`; added Playwright regression coverage for random Trips/Departures/Isochrones switch sequences.
 - Added `bin/test-gate` to run docs validation, UI lint, UI typecheck, and UI unit tests.
 - Added `bin/validate-docs` to validate docs metadata, `docs/README.md` index consistency, and strict `docs/TODO.md` formatting (`Task/Scope/Done when`, `## N --- DONE` support).
 - Added release/session workflow docs: `docs/RELEASING.md`, `docs/HANDOFF.md`, and `docs/WORKFLOW.md`.

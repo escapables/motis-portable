@@ -70,15 +70,16 @@ read_when:
 # - Open issues are resolved or intentionally deferred with clear notes.
 # - Done: `gh issue list --state open` returns `[]` (no open issues to triage).
 
-## 8
-Task: Fix stop ID loss when switching Trips/Departures/Isochrones repeatedly.
-Scope:
-- Reproduce by switching tabs in random order multiple times.
-- Keep selected stop/location IDs stable across tab switches.
-- Add regression coverage where practical.
-Done when:
-- Repeated random tab switches do not clear or replace stop IDs in Departures/Isochrones.
-- State stays synchronized without requiring manual re-typing/re-selection.
+## 8 --- DONE
+# Task: Fix stop ID loss when switching Trips/Departures/Isochrones repeatedly.
+# Scope:
+# - Reproduce by switching tabs in random order multiple times.
+# - Keep selected stop/location IDs stable across tab switches.
+# - Add regression coverage where practical.
+# Done when:
+# - Repeated random tab switches do not clear or replace stop IDs in Departures/Isochrones.
+# - State stays synchronized without requiring manual re-typing/re-selection.
+# - Done: `DeparturesMask` auto-select now compares against `page.state.selectedStop` (not stale local dedupe key); Playwright regression `@regression preserves departures stopId across repeated tab switches` added in `ui/tests/test.ts`.
 
 ## 9
 Task: Re-clone repository into a clean temp directory under `~`.

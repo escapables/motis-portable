@@ -10,51 +10,46 @@ read_when:
 
 ## Session
 
-- Updated: `2026-02-14 10:56 UTC`
+- Updated: `2026-02-14 11:23 UTC`
 - Agent: `codex`
 - Branch: `master`
-- HEAD: `7953dc98`
-- Scope: UI routing/tab-sync fixes, isochrones defaults tuning, repeated USB bundle rebuilds for local validation.
+- HEAD: `979eb769`
+- Scope: Fixed repeated tab-switch stop-id loss in Departures, added regression coverage, rebuilt USB bundle, and synced docs.
 
 ## Completed
 
-- CI workflow Linux venv install fix landed in working tree (`.github/workflows/ci.yml`): switched to `python3-venv` install path on Ubuntu 24.04.
-- Routing UI control layout updates:
-  - Pin buttons moved inside origin/destination inputs and right-anchored.
-  - Swap button moved into right-side whitespace, centered between inputs.
-  - Files: `ui/src/lib/SearchMask.svelte`, `ui/src/lib/AddressTypeahead.svelte`.
-- Isochrones default tuning:
-  - `maxPostTransitTime` default in isochrones context reduced to `5 * 60`.
-  - File: `ui/src/routes/+page.svelte`.
-- Cross-tab location/state sync updates:
-  - Shared `from` between Trips and Departures.
-  - Tab switch sync between Trips and Isochrones (`from <-> one`) fixed for both directions with previous-tab guard.
-  - Departures auto-select by carried `STOP` id when tab becomes active; dedupe key avoids repeat requests.
-  - Files: `ui/src/routes/+page.svelte`, `ui/src/lib/DeparturesMask.svelte`.
-- TODO updated with new pending task for random tab-switch stop-id loss:
-  - Added as next pending item in `docs/TODO.md` (`## 8`) and renumbered subsequent sections.
-- Clean-clone verification completed in `/home/dator/tmp/motis-portable-clean-20260214-095914`:
-  - Native build completed using `CMAKE_BUILD_PARALLEL_LEVEL=2` (OOM-safe).
-  - USB bundle build completed.
-- Workspace USB bundle rebuilt multiple times; latest successful build at `11:52 UTC`.
+- Fixed root cause for repeated tab-switch stop-id loss:
+  - Removed stale local dedupe key from Departures auto-select logic.
+  - Auto-select now compares against `page.state.selectedStop` key (`stopId|time`) before deciding to skip.
+  - File: `ui/src/lib/DeparturesMask.svelte`.
+- Added deterministic integration regression:
+  - New Playwright test `@regression preserves departures stopId across repeated tab switches`.
+  - Mocks `initial`, `stoptimes`, and `one-to-all`; drives random-like tab switch sequence; asserts `stopId` remains stable.
+  - File: `ui/tests/test.ts`.
+- Updated task tracking and release notes:
+  - `docs/TODO.md` item `## 8` marked `DONE`.
+  - `CHANGELOG.md` `Unreleased` updated with stop-id persistence fix and regression test note.
+- Rebuilt portable runtime bundle:
+  - `./gui-svelte/build-usb.sh` completed successfully.
+  - Fresh bundle artifacts stamped `12:21` in `/home/dator/projects/motis-portable/usb-bundle`.
+- User-reported manual validation: “Problem solved, works perfectly.”
 
 ## Verification Run
 
-- `pnpm --dir ui run check` -> pass (multiple reruns; 0 errors, 0 warnings).
-- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright pnpm --dir ui run test:integration:smoke` -> pass (multiple reruns; `1 passed`).
-- `./bin/validate-docs` -> pass (including TODO format/index checks).
-- `CMAKE_BUILD_PARALLEL_LEVEL=2 cmake --build build --target motis motis-ipc` in clean clone -> pass.
-- `./gui-svelte/build-usb.sh` in workspace -> pass; bundle at `/home/dator/projects/motis-portable/usb-bundle` (latest timestamp `11:52 UTC`).
+- `pnpm --dir ui run lint` -> pass.
+- `pnpm --dir ui run check` -> pass (`0 errors`, `0 warnings`).
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright pnpm --dir ui exec playwright test tests/test.ts --workers=1 --grep "@regression"` -> pass (`1 passed`).
+- `PLAYWRIGHT_BROWSERS_PATH=/tmp/ms-playwright pnpm --dir ui run test:integration:smoke` -> pass (`1 passed`).
+- `./gui-svelte/build-usb.sh` -> pass; bundle refreshed in `/home/dator/projects/motis-portable/usb-bundle` (artifact timestamp `12:21`).
 
 ## Open Risks / Blockers
 
-- Working tree is intentionally dirty (pre-existing + current session edits); no new commit created in this session.
-- Random repeated tab switching stop-id persistence needs user-facing stress confirmation in desktop runtime despite logic fixes.
-- CI status for current working tree is not re-validated post-push because no push was requested in this session.
+- Working tree intentionally dirty (not committed): `ui/src/lib/DeparturesMask.svelte`, `ui/tests/test.ts`, `docs/TODO.md`, `docs/HANDOFF.md`, `CHANGELOG.md`.
+- CI was intentionally skipped in this session per user request.
+- Full project gate `./bin/test-gate` has not been run after this fix chain.
 
 ## Next Actions
 
-- Run manual stress test in `usb-bundle` by rapidly switching Trips/Departures/Isochrones and confirming stop IDs persist in both Departures and Isochrones.
-- If persistence bug still appears, add deterministic regression coverage for tab-switch state sync.
-- Before commit/push, run full local gate (`./bin/test-gate`) from current working tree.
-- Commit/push only on explicit user instruction.
+- Run `./bin/test-gate` before handoff/commit to satisfy local gate policy.
+- Commit docs + UI regression fix (Conventional Commit) when approved.
+- Optionally run CI follow-up (`gh run list/view`) once user wants remote status again.
