@@ -34,9 +34,7 @@ gui-svelte/src-tauri/target/
 usb-bundle/
 error.txt
 config2.yml
-/TODO.md
 /AGENTS.md
-/HANDOFF.md
-AGENTS.md
-TODO.md
-HANDOFF.md
+docs/TODO.md
+docs/HANDOFF.md
+docs/PRIMARY_TODO.md
