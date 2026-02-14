@@ -147,21 +147,26 @@ jobs:
       - name: install venv
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends python3-venv
+          apt-get install -y --no-install-recommends python3-venv llvm-21-tools
 
       - name: Generate Coverage Report
         if: matrix.config.preset == 'linux-debug'
         run: |
           python3 -m venv /tmp/venv
           /tmp/venv/bin/pip install gcovr
-          if command -v gcov >/dev/null 2>&1; then
-            GCOV_CMD="$(command -v gcov)"
+          if command -v llvm-cov-21 >/dev/null 2>&1; then
+            GCOV_CMD="llvm-cov-21 gcov"
           elif command -v llvm-cov >/dev/null 2>&1; then
             GCOV_CMD="llvm-cov gcov"
+          elif command -v gcov-13 >/dev/null 2>&1; then
+            GCOV_CMD="$(command -v gcov-13)"
+          elif command -v gcov >/dev/null 2>&1; then
+            GCOV_CMD="$(command -v gcov)"
           else
-            echo "No gcov-compatible tool found (expected gcov or llvm-cov)." >&2
+            echo "No gcov-compatible tool found (expected llvm-cov-21, llvm-cov, gcov-13, or gcov)." >&2
             exit 1
           fi
+          echo "Using gcov executable: ${GCOV_CMD}"
           /tmp/venv/bin/gcovr \
             --root . \
             --object-directory build \

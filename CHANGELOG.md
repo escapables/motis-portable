@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed repeated tab switching loss of Departures `stopId` by aligning auto-select dedupe with live `page.state.selectedStop`; added Playwright regression coverage for random Trips/Departures/Isochrones switch sequences.
 - Added `bin/test-gate` to run docs validation, UI lint, UI typecheck, and UI unit tests.
 - Fixed linux-debug CI coverage generation by removing non-POSIX `source` usage in GitHub Actions venv setup.
-- Fixed linux-debug CI coverage generation when `gcov` is absent by selecting `gcov` or fallback `llvm-cov gcov` in GitHub Actions.
+- Fixed linux-debug CI coverage generation when coverage tools are versioned-only by installing `llvm-21-tools` and selecting `llvm-cov-21 gcov` / `gcov-13` fallbacks in GitHub Actions.
 - Added `bin/validate-docs` to validate docs metadata, `docs/README.md` index consistency, and strict `docs/TODO.md` formatting (`Task/Scope/Done when`, `## N --- DONE` support).
 - Added release/session workflow docs: `docs/RELEASING.md`, `docs/HANDOFF.md`, and `docs/WORKFLOW.md`.
 - Standardized front matter across legacy docs and added explicit read order in `docs/README.md`.
