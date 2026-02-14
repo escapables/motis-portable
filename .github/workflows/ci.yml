@@ -154,9 +154,18 @@ jobs:
         run: |
           python3 -m venv /tmp/venv
           /tmp/venv/bin/pip install gcovr
+          if command -v gcov >/dev/null 2>&1; then
+            GCOV_CMD="$(command -v gcov)"
+          elif command -v llvm-cov >/dev/null 2>&1; then
+            GCOV_CMD="llvm-cov gcov"
+          else
+            echo "No gcov-compatible tool found (expected gcov or llvm-cov)." >&2
+            exit 1
+          fi
           /tmp/venv/bin/gcovr \
             --root . \
             --object-directory build \
+            --gcov-executable "$GCOV_CMD" \
             --xml-pretty \
             --output build/coverage.xml \
             --exclude 'deps/.*' \
