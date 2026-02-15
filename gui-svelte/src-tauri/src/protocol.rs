@@ -306,7 +306,8 @@ fn handle_debug_transfers(_params: &std::collections::HashMap<String, String>)
 
 #[cfg(test)]
 mod tests {
-    use super::{build_passthrough_path_and_query, classify_path, RouteKind};
+    use super::{build_passthrough_path_and_query, classify_error, classify_path, RouteKind};
+    use tauri::http::StatusCode;
 
     #[test]
     fn passthrough_path_without_query() {
@@ -370,5 +371,28 @@ mod tests {
                 "UI OpenAPI path not routed in protocol mode: {path}"
             );
         }
+    }
+
+    #[test]
+    fn classify_error_maps_unsupported_protocol_endpoint_to_501() {
+        let (status, stage) = classify_error(
+            "Unsupported protocol endpoint: /api/debug/flex. This endpoint is not available in portable IPC mode.",
+        );
+        assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
+        assert_eq!(stage, "endpoint");
+    }
+
+    #[test]
+    fn classify_error_maps_unknown_endpoint_to_404() {
+        let (status, stage) = classify_error("Unknown endpoint: /api/v1/unknown");
+        assert_eq!(status, StatusCode::NOT_FOUND);
+        assert_eq!(stage, "endpoint");
+    }
+
+    #[test]
+    fn classify_error_maps_ipc_failures_to_502() {
+        let (status, stage) = classify_error("IPC command failed after 3 attempts: broken pipe");
+        assert_eq!(status, StatusCode::BAD_GATEWAY);
+        assert_eq!(stage, "ipc");
     }
 }
