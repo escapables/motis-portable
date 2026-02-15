@@ -55,3 +55,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored `.github/workflows/ci.yml` to the last known-green baseline after workflow-file validation failures on push-triggered runs.
 - Re-enabled enhanced CI workflow updates and fixed workflow YAML parsing by quoting Tauri `cargo test` filter arguments containing `::`.
 - Added Tauri Linux system package installation in `tauri-native-tests` (`glib/gtk/webkit/pkg-config` dependencies) and aligned `test/native_ipc_regression_test.cc` with CI `clang-format-21` output.
+- Updated `tauri-native-tests` to build `ui/build` before cargo tests so `tauri::generate_context!()` no longer fails on missing `frontendDist`.
