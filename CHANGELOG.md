@@ -53,3 +53,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Re-ran release-preflight technical checks on fresh artifacts: clean `build-release-check` compile, native wrapper regression filter (`2/2`), copied-path USB launcher self-test, and copied-path desktop manual route-query smoke.
 - Reconfirmed pre-tag gate and CI status: fixed `docs/TODO.md` validation schema drift, reran `./bin/test-gate` (`26/26` unit tests), reran Playwright smoke (`1/1`) and regression (`2/2`), and verified latest `master` `CI` run remains green.
 - Restored `.github/workflows/ci.yml` to the last known-green baseline after workflow-file validation failures on push-triggered runs.
+- Re-enabled enhanced CI workflow updates and fixed workflow YAML parsing by quoting Tauri `cargo test` filter arguments containing `::`.
