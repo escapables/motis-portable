@@ -96,3 +96,36 @@ test('@regression preserves departures stopId across repeated tab switches', asy
 	await expect(departuresTab).toHaveAttribute('data-state', 'active');
 	await expect.poll(() => new URL(page.url()).searchParams.get('stopId')).toBe('stop-a');
 });
+
+test('@regression cancels pending isochrones request when leaving tab quickly', async ({
+	page
+}) => {
+	await setupInitialRoute(page);
+
+	let oneToAllRequestCount = 0;
+	await page.route('**/api/v1/one-to-all**', async (route) => {
+		oneToAllRequestCount += 1;
+		await route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ all: [] })
+		});
+	});
+
+	await page.goto('/?fromPlace=stop-a&fromName=Test%20Stop');
+
+	await page.evaluate(() => {
+		const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+		const isochrones = tabs.find((tab) => /Isochrones/i.test(tab.textContent ?? ''));
+		const connections = tabs.find((tab) => /Connections/i.test(tab.textContent ?? ''));
+		isochrones?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		connections?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+	});
+
+	await page.waitForTimeout(200);
+	expect(oneToAllRequestCount).toBe(0);
+	await expect(page.getByRole('tab', { name: /Connections/i })).toHaveAttribute(
+		'data-state',
+		'active'
+	);
+});
