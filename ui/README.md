@@ -10,14 +10,7 @@ Generate OpenAPI client (when openapi.yaml has been changed, included in `pnpm -
 pnpm update-api
 ```
 
-To publish a new version to npmjs:
-
-```bash
-cd src/lib/api
-pnpm build
-pnpm version patch --no-git-tag-version
-pnpm publish --access public
-```
+Release distribution is GitHub-only. Canonical release checklist lives in `docs/RELEASING.md`.
 
 ## City Transit Normalization Rules
 

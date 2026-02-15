@@ -39,3 +39,5 @@ config2.yml
 docs/TODO.md
 docs/HANDOFF.md
 docs/PRIMARY_TODO.md
+delete-cancelled-runs.zsh
+scripts/delete-failed-cancelled-runs.zsh
