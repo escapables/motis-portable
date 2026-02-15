@@ -22,8 +22,7 @@ read_when:
 11. `docs/scripting.md`
 12. `docs/STYLE.md`
 13. `docs/mislabel-inventory.md`
-14. `docs/guardrail-review-2026-02-14.md`
-15. `docs/decisions/localhost-mode-deprecation.md`
+14. `docs/decisions/localhost-mode-deprecation.md`
 
 ## Fork-specific docs
 
@@ -35,7 +34,6 @@ read_when:
 - `docs/WORKFLOW.md`: pickup/handoff process and handoff quality expectations.
 - `docs/RELEASING.md`: release checklist, changelog flow, and GitHub release guardrails.
 - `docs/mislabel-inventory.md`: reproducible mislabel catalog and normalization pass status.
-- `docs/guardrail-review-2026-02-14.md`: current guardrail findings + queued follow-ups.
 - `docs/decisions/localhost-mode-deprecation.md`: issue `#19` decision memo and migration checklist.
 
 ## General/reference docs

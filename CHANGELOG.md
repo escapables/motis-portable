@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- No changes yet.
+
+## [2.9.0] - 2026-02-15
+
 ### Bug Fixes
 
 - Fixed IPC startup error handling so `init` failures return structured errors instead of ambiguous failure output.
@@ -44,3 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added native IPC integration regressions for startup init-throw JSON behavior and wrapper exception contracts.
 - Revalidated post-refactor step-7 remediation and refreshed step-8 review deliverables with updated severity/file-line evidence.
 - Completed step-9 post-refactor re-review gate: `./bin/test-gate` green plus rerun native C++/Rust and Playwright smoke+regression slices.
+- Completed fresh clean-tree scenario-5 verification: rebuilt `build-todo-debug`, reran native wrapper regressions (`2/2`), and passed `import -> generate -> batch -> compare` with `consumed: 20` / `equal: 20`.
+- Reset release-preflight checklist to concrete rerun steps (fresh clean-tree build, copied-path USB simulation, full gate/CI confirmation) before tag/release.
+- Re-ran release-preflight technical checks on fresh artifacts: clean `build-release-check` compile, native wrapper regression filter (`2/2`), copied-path USB launcher self-test, and copied-path desktop manual route-query smoke.
+- Reconfirmed pre-tag gate and CI status: fixed `docs/TODO.md` validation schema drift, reran `./bin/test-gate` (`26/26` unit tests), reran Playwright smoke (`1/1`) and regression (`2/2`), and verified latest `master` `CI` run remains green.
