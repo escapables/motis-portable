@@ -1,18 +1,18 @@
 #include "gtest/gtest.h"
 
-#include <array>
+#include <sys/wait.h>
 #include <cstdio>
+#include <array>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <system_error>
-#include <sys/wait.h>
 
 #include "boost/json.hpp"
 
+#include "../native/api.h"
 #include "motis/config.h"
 #include "motis/import.h"
-#include "../native/api.h"
 
 using namespace std::string_view_literals;
 
@@ -66,7 +66,8 @@ command_result run_command_capture_stdout(std::string const& cmd) {
   }
 
   std::array<char, 256> buffer{};
-  while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+  while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) !=
+         nullptr) {
     result.stdout_ += buffer.data();
   }
 
@@ -139,8 +140,8 @@ protected:
 TEST(motis_native_ipc, init_throw_returns_structured_json_error) {
   auto const ipc_binary = find_ipc_binary();
   ASSERT_TRUE(ipc_binary.has_value());
-  auto const cmd = ipc_binary->string() +
-                   " test/does-not-exist-for-ipc-init 2>/dev/null";
+  auto const cmd =
+      ipc_binary->string() + " test/does-not-exist-for-ipc-init 2>/dev/null";
   auto const result = run_command_capture_stdout(cmd);
 
   ASSERT_EQ(1, result.exit_code_);
@@ -162,12 +163,14 @@ TEST_F(native_wrapper_regression_test, endpoint_wrapper_fault_contracts_hold) {
   auto const to = motis::native::coord{50.10658, 8.66178};
 
   motis::native::test_support::inject_fault_once("plan_route");
-  EXPECT_THROW((void)motis::native::plan_route(*inst_, from, to), std::exception);
+  EXPECT_THROW((void)motis::native::plan_route(*inst_, from, to),
+               std::exception);
 
   motis::native::test_support::inject_fault_once("geocode");
   EXPECT_THROW((void)motis::native::geocode(*inst_, "FFM"), std::exception);
 
   motis::native::test_support::inject_fault_once("api_get");
-  auto const result = motis::native::api_get(*inst_, "/api/v1/geocode?text=FFM");
+  auto const result =
+      motis::native::api_get(*inst_, "/api/v1/geocode?text=FFM");
   EXPECT_FALSE(result.has_value());
 }

@@ -54,3 +54,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reconfirmed pre-tag gate and CI status: fixed `docs/TODO.md` validation schema drift, reran `./bin/test-gate` (`26/26` unit tests), reran Playwright smoke (`1/1`) and regression (`2/2`), and verified latest `master` `CI` run remains green.
 - Restored `.github/workflows/ci.yml` to the last known-green baseline after workflow-file validation failures on push-triggered runs.
 - Re-enabled enhanced CI workflow updates and fixed workflow YAML parsing by quoting Tauri `cargo test` filter arguments containing `::`.
+- Added Tauri Linux system package installation in `tauri-native-tests` (`glib/gtk/webkit/pkg-config` dependencies) and aligned `test/native_ipc_regression_test.cc` with CI `clang-format-21` output.
