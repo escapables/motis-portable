@@ -46,8 +46,11 @@ execute_process(
   ERROR_QUIET
 )
 if (EXISTS "${MOTIS_STATIC_LIBSTDCXX}" AND EXISTS "${MOTIS_STATIC_LIBGCC}")
-  # Prefer static C++ runtime on USB builds when toolchain support exists.
-  target_link_options(motis-ipc PRIVATE -static-libstdc++ -static-libgcc)
+  # Keep static runtime for release-like bundles; debug+stacktrace causes duplicate symbols.
+  target_link_options(motis-ipc PRIVATE
+    "$<$<NOT:$<CONFIG:Debug>>:-static-libstdc++>"
+    "$<$<NOT:$<CONFIG:Debug>>:-static-libgcc>"
+  )
 else ()
   message(WARNING "Static libstdc++/libgcc not found; building motis-ipc with dynamic runtime libs")
 endif ()
