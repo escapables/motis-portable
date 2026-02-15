@@ -2,10 +2,14 @@
 
 set(native_sources
   api.cc
+  api_dispatch.cc
+  base64.cc
 )
 
 set(native_headers
   api.h
+  api_internal.h
+  base64.h
 )
 
 # Native API library

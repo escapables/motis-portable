@@ -135,7 +135,13 @@ int main(int argc, char* argv[]) {
     std::string data_path = argv[1];
     
     // Initialize MOTIS
-    auto* inst = init(data_path);
+    native_instance* inst = nullptr;
+    try {
+        inst = init(data_path);
+    } catch (const std::exception& e) {
+        send_error(std::string("Failed to initialize MOTIS: ") + e.what());
+        return 1;
+    }
     if (!inst) {
         send_error("Failed to initialize MOTIS");
         return 1;

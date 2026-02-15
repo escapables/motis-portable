@@ -191,3 +191,4 @@ endif()
 
 # --- NATIVE API ---
 add_subdirectory(native)
+target_link_libraries(motis-portable motis-native)

@@ -1,836 +1,111 @@
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::io::{self, BufRead, BufReader, Write};
-use std::sync::Mutex;
-use once_cell::sync::Lazy;
-use serde::{Deserialize, Serialize};
-use std::path::Path;
-use std::time::Duration;
-#[cfg(unix)]
-use std::io::ErrorKind;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LatLon {
-    pub lat: f64,
-    pub lon: f64,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RouteLeg {
-    pub mode: String,
-    pub from_name: String,
-    pub to_name: String,
-    pub from: LatLon,
-    pub to: LatLon,
-    pub duration_seconds: i32,
-    pub distance_meters: i32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub route_short_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub headsign: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RouteResult {
-    pub duration_seconds: i32,
-    pub transfers: i32,
-    pub legs: Vec<RouteLeg>,
-}
-
-// Area from C++ API
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Area {
-    pub name: String,
-    pub admin_level: i32,
-    pub matched: bool,
-    pub unique: bool,
-    #[serde(rename = "default")]
-    pub is_default: bool,
-}
-
-// Simple location from C++ API (now with full Match data)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LocationResult {
-    pub name: String,
-    pub place_id: String,
-    pub lat: f64,
-    pub lon: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_: Option<String>,
-    #[serde(default)]
-    pub areas: Vec<MatchArea>,
-    #[serde(default)]
-    pub tokens: Vec<Vec<i32>>,
-    pub score: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub modes: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub importance: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub street: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub house_number: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub country: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub zip: Option<String>,
-}
-
-// Area for Match response (API format)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MatchArea {
-    pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub admin_level: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub matched: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub unique: Option<bool>,
-    #[serde(rename = "default", skip_serializing_if = "Option::is_none")]
-    pub is_default: Option<bool>,
-}
-
-// Token for Match response [start, length]
-pub type Token = [i32; 2];
-
-// Full Match object expected by the UI
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Match {
-    #[serde(rename = "type")]
-    pub type_: String,
-    pub name: String,
-    pub id: String,
-    pub lat: f64,
-    pub lon: f64,
-    pub tokens: Vec<Token>,
-    pub areas: Vec<MatchArea>,
-    pub score: f64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub category: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub street: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub house_number: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub country: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub zip: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tz: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub level: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub modes: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub importance: Option<f64>,
-}
-
-impl Match {
-    /// Convert a LocationResult to a full Match using the real data from C++ API
-    pub fn from_location_result(loc: &LocationResult) -> Self {
-        // Convert tokens from C++ format
-        let tokens: Vec<Token> = loc.tokens.iter()
-            .filter(|t| t.len() >= 2)
-            .map(|t| [t[0], t[1]])
-            .collect();
-        
-        // Determine type - default to PLACE if not specified
-        let type_ = loc.type_.clone().unwrap_or_else(|| "PLACE".to_string());
-        
-        Match {
-            type_,
-            name: loc.name.clone(),
-            id: loc.place_id.clone(),
-            lat: loc.lat,
-            lon: loc.lon,
-            tokens,
-            areas: loc.areas.clone(),  // Clone directly from LocationResult
-            score: loc.score,
-            category: loc.category.clone(),
-            street: loc.street.clone(),
-            house_number: loc.house_number.clone(),
-            country: loc.country.clone(),
-            zip: loc.zip.clone(),
-            tz: None,  // Not yet implemented in C++ API
-            level: None,  // Not yet implemented in C++ API
-            modes: loc.modes.clone(),
-            importance: loc.importance,
-        }
-    }
-}
-
-// Backend connection modes
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum BackendMode {
-    Ipc, // Subprocess with stdin/stdout - no HTTP needed
-}
-
-// Global state
-static BACKEND_MODE: Lazy<Mutex<BackendMode>> = Lazy::new(|| Mutex::new(BackendMode::Ipc));
-static IPC_PROCESS: Lazy<Mutex<Option<IpcBackend>>> = Lazy::new(|| Mutex::new(None));
-static IPC_LAUNCH_CONFIG: Lazy<Mutex<Option<IpcLaunchConfig>>> = Lazy::new(|| Mutex::new(None));
-static STARTUP_DIAGNOSTICS: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
-
-const IPC_RECOVERY_MAX_ATTEMPTS: usize = 2;
-const IPC_RECOVERY_DELAYS_MS: [u64; IPC_RECOVERY_MAX_ATTEMPTS] = [250, 1000];
-
-#[derive(Debug, Clone)]
-struct IpcLaunchConfig {
-    exe_path: String,
-    data_path: String,
-}
-
-fn remember_startup_diagnostics(message: impl Into<String>) {
-    let message = message.into();
-    eprintln!("[MOTIS-GUI] startup-diagnostics: {}", message);
-    if let Ok(mut guard) = STARTUP_DIAGNOSTICS.lock() {
-        *guard = Some(message);
-    }
-}
-
-fn clear_startup_diagnostics() {
-    if let Ok(mut guard) = STARTUP_DIAGNOSTICS.lock() {
-        *guard = None;
-    }
-}
-
-pub fn get_startup_diagnostics() -> Option<String> {
-    STARTUP_DIAGNOSTICS
-        .lock()
-        .ok()
-        .and_then(|guard| guard.clone())
-}
-
-pub struct IpcBackend {
-    child: Child,
-    stdin: ChildStdin,
-    stdout: BufReader<ChildStdout>,
-}
-
-impl IpcBackend {
-    fn send_command(&mut self, cmd: &str) -> io::Result<String> {
-        if let Some(status) = self.child.try_wait()? {
-            return Err(io::Error::new(
-                io::ErrorKind::BrokenPipe,
-                format!("motis-ipc exited before command send: {}", status),
-            ));
-        }
-
-        writeln!(self.stdin, "{}", cmd)?;
-        self.stdin.flush()?;
-
-        let mut line = String::new();
-        let bytes_read = self.stdout.read_line(&mut line)?;
-        if bytes_read == 0 {
-            if let Some(status) = self.child.try_wait()? {
-                return Err(io::Error::new(
-                    io::ErrorKind::BrokenPipe,
-                    format!("motis-ipc exited before response: {}", status),
-                ));
-            }
-            return Err(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "motis-ipc returned empty response",
-            ));
-        }
-        Ok(line)
-    }
-
-    fn terminate(&mut self, reason: &str) {
-        match self.child.try_wait() {
-            Ok(Some(status)) => {
-                eprintln!("[MOTIS-GUI] motis-ipc already exited ({reason}): {status}");
-            }
-            Ok(None) => {
-                eprintln!(
-                    "[MOTIS-GUI] Stopping motis-ipc PID {} ({reason})",
-                    self.child.id()
-                );
-                if let Err(err) = self.child.kill() {
-                    eprintln!("[MOTIS-GUI] Failed to kill motis-ipc: {}", err);
-                }
-                if let Err(err) = self.child.wait() {
-                    eprintln!("[MOTIS-GUI] Failed waiting for motis-ipc exit: {}", err);
-                }
-            }
-            Err(err) => {
-                eprintln!("[MOTIS-GUI] Failed to query motis-ipc state: {}", err);
-            }
-        }
-    }
-}
-
-impl Drop for IpcBackend {
-    fn drop(&mut self) {
-        self.terminate("drop");
-    }
-}
-
-/// Copy executable to /tmp and set executable permission.
-#[cfg(unix)]
-fn copy_to_tmp_and_make_executable(exe_path: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let path = Path::new(exe_path);
-
-    let tmp_dir = std::env::temp_dir();
-    let exe_name = path
-        .file_name()
-        .ok_or("Invalid exe path")?
-        .to_str()
-        .ok_or("Invalid exe name")?;
-    let tmp_path = tmp_dir.join(exe_name);
-
-    eprintln!("[MOTIS-GUI] Copying executable to /tmp: {:?}", tmp_path);
-    std::fs::copy(exe_path, &tmp_path)?;
-
-    use std::os::unix::fs::PermissionsExt;
-    let mut perms = std::fs::metadata(&tmp_path)?.permissions();
-    perms.set_mode(0o755);
-    std::fs::set_permissions(&tmp_path, perms)?;
-
-    tmp_path
-        .to_str()
-        .map(|s| s.to_string())
-        .ok_or_else(|| "Invalid tmp path".into())
-}
-
-/// Resolve an executable path suitable for spawn (handles FAT32/non-exec mounts).
-fn ensure_executable(exe_path: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let path = Path::new(exe_path);
-
-    if !path.exists() {
-        return Err(format!("Executable not found: {}", exe_path).into());
-    }
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mode = std::fs::metadata(path)?.permissions().mode();
-        if mode & 0o111 != 0 {
-            return Ok(exe_path.to_string());
-        }
-        eprintln!(
-            "[MOTIS-GUI] Executable bit missing for {}, using /tmp copy",
-            exe_path
-        );
-        return copy_to_tmp_and_make_executable(exe_path);
-    }
-
-    #[cfg(not(unix))]
-    {
-        Ok(exe_path.to_string())
-    }
-}
-
-fn validate_ipc_executable_path(exe_path: &str) -> Result<(), String> {
-    let path = Path::new(exe_path);
-    if !path.exists() {
-        return Err(format!(
-            "motis-ipc executable not found at '{}'. Next action: verify the file exists and launch via RUN.sh.",
-            exe_path
-        ));
-    }
-    if !path.is_file() {
-        return Err(format!(
-            "motis-ipc path is not a file: '{}'. Next action: check bundle layout and MOTIS_IPC_PATH.",
-            exe_path
-        ));
-    }
-    Ok(())
-}
-
-fn validate_data_directory(data_path: &str) -> Result<(), String> {
-    let path = Path::new(data_path);
-    if !path.exists() {
-        return Err(format!(
-            "Data directory not found at '{}'. Next action: set MOTIS_DATA_PATH correctly or place 'data/' next to the app.",
-            data_path
-        ));
-    }
-    if !path.is_dir() {
-        return Err(format!(
-            "Data path is not a directory: '{}'. Next action: point MOTIS_DATA_PATH to a MOTIS data directory.",
-            data_path
-        ));
-    }
-    let config = path.join("config.yml");
-    if !config.exists() {
-        return Err(format!(
-            "Data directory '{}' is missing 'config.yml'. Next action: run import (motis-import.sh) or copy a complete data bundle.",
-            data_path
-        ));
-    }
-    Ok(())
-}
-
-fn spawn_ipc_backend(exe_path: &str, data_path: &str) -> Result<IpcBackend, Box<dyn std::error::Error>> {
-    let actual_exe_path = ensure_executable(exe_path)?;
-    eprintln!("[MOTIS-GUI] Using executable: {}", actual_exe_path);
-
-    let spawn = |binary: &str| {
-        let mut cmd = Command::new(binary);
-        cmd.arg(data_path)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit());  // Show motis-ipc's stderr for debugging
-        cmd.spawn()
-    };
-
-    let mut child = match spawn(&actual_exe_path) {
-        Ok(child) => child,
-        #[cfg(unix)]
-        Err(err) if err.kind() == ErrorKind::PermissionDenied => {
-            eprintln!(
-                "[MOTIS-GUI] Spawn failed due to permission/noexec mount, retrying from /tmp: {}",
-                err
-            );
-            let tmp_exe = copy_to_tmp_and_make_executable(exe_path)?;
-            eprintln!("[MOTIS-GUI] Retrying spawn with executable: {}", tmp_exe);
-            spawn(&tmp_exe).map_err(|e| format!("Failed to spawn motis-ipc from /tmp: {}", e))?
-        }
-        Err(err) => {
-            return Err(format!(
-                "Failed to spawn motis-ipc: {}. Path: {}",
-                err, actual_exe_path
-            )
-            .into())
-        }
-    };
-
-    eprintln!("[MOTIS-GUI] motis-ipc process spawned, PID: {}", child.id());
-
-    // Catch immediate loader/startup failures early (e.g. missing GLIBCXX symbol).
-    std::thread::sleep(Duration::from_millis(150));
-    if let Some(status) = child.try_wait()? {
-        return Err(format!(
-            "motis-ipc exited immediately (status: {}). Check executable compatibility and startup logs.",
-            status
-        ).into());
-    }
-
-    let stdin = child.stdin.take().ok_or("Failed to get stdin")?;
-    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
-
-    Ok(IpcBackend {
-        child,
-        stdin,
-        stdout: BufReader::new(stdout),
-    })
-}
-
-fn replace_ipc_backend(backend: IpcBackend, reason: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut guard = IPC_PROCESS.lock()?;
-    if let Some(mut old) = guard.take() {
-        old.terminate(reason);
-    }
-    *guard = Some(backend);
-    Ok(())
-}
-
-fn recover_ipc_backend(reason: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    let launch = IPC_LAUNCH_CONFIG.lock()?.clone();
-    let Some(launch) = launch else {
-        eprintln!("[MOTIS-GUI] IPC recovery skipped (no launch config): {reason}");
-        return Ok(false);
-    };
-
-    eprintln!("[MOTIS-GUI] IPC recovery started: {reason}");
-    for attempt in 1..=IPC_RECOVERY_MAX_ATTEMPTS {
-        match spawn_ipc_backend(&launch.exe_path, &launch.data_path) {
-            Ok(backend) => {
-                replace_ipc_backend(backend, "recovery-replace")?;
-                eprintln!("[MOTIS-GUI] IPC recovery succeeded on attempt {}", attempt);
-                return Ok(true);
-            }
-            Err(err) => {
-                eprintln!(
-                    "[MOTIS-GUI] IPC recovery attempt {}/{} failed: {}",
-                    attempt, IPC_RECOVERY_MAX_ATTEMPTS, err
-                );
-                if attempt < IPC_RECOVERY_MAX_ATTEMPTS {
-                    std::thread::sleep(Duration::from_millis(
-                        IPC_RECOVERY_DELAYS_MS[attempt - 1],
-                    ));
-                }
-            }
-        }
-    }
-
-    eprintln!("[MOTIS-GUI] IPC recovery failed after {} attempts", IPC_RECOVERY_MAX_ATTEMPTS);
-    Ok(false)
-}
-
-fn send_ipc_command_with_recovery(cmd: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let total_attempts = IPC_RECOVERY_MAX_ATTEMPTS + 1;
-
-    for attempt in 1..=total_attempts {
-        let response = {
-            let mut guard = IPC_PROCESS.lock()?;
-            let backend = guard.as_mut().ok_or("IPC not initialized")?;
-            backend.send_command(cmd)
-        };
-
-        match response {
-            Ok(line) => return Ok(line),
-            Err(err) => {
-                eprintln!(
-                    "[MOTIS-GUI] IPC command attempt {}/{} failed: {}",
-                    attempt, total_attempts, err
-                );
-                if attempt == total_attempts {
-                    return Err(format!(
-                        "IPC command failed after {} attempts: {}",
-                        total_attempts, err
-                    )
-                    .into());
-                }
-                if !recover_ipc_backend(&err.to_string())? {
-                    return Err(format!("IPC recovery failed after command error: {}", err).into());
-                }
-            }
-        }
-    }
-
-    Err("IPC command failed with unknown recovery state".into())
-}
-
-fn send_ipc_json_command(cmd: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let response = send_ipc_command_with_recovery(cmd)?;
-    let result: serde_json::Value = serde_json::from_str(&response)
-        .map_err(|e| format!("Invalid IPC JSON response: {} (raw: {})", e, response.trim()))?;
-
-    if result["status"] == "ok" {
-        Ok(result["data"].clone())
-    } else {
-        let msg = result["message"].as_str().unwrap_or("Unknown error");
-        Err(msg.to_string().into())
-    }
-}
-
-pub fn init_ipc(exe_path: &str, data_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    eprintln!("[MOTIS-GUI] Starting motis-ipc...");
-    eprintln!("[MOTIS-GUI] Original exe path: {}", exe_path);
-    eprintln!("[MOTIS-GUI] Data path: {}", data_path);
-
-    if let Err(message) = validate_ipc_executable_path(exe_path) {
-        remember_startup_diagnostics(message.clone());
-        return Err(message.into());
-    }
-
-    if let Err(message) = validate_data_directory(data_path) {
-        remember_startup_diagnostics(message.clone());
-        return Err(message.into());
-    }
-
-    let backend = match spawn_ipc_backend(exe_path, data_path) {
-        Ok(backend) => backend,
-        Err(e) => {
-            let message = format!(
-                "Failed to start motis-ipc (exe='{}', data='{}'): {}. Next action: run RUN.sh --launcher-self-test and check launcher.log/error.txt.",
-                exe_path, data_path, e
-            );
-            remember_startup_diagnostics(message.clone());
-            return Err(message.into());
-        }
-    };
-    replace_ipc_backend(backend, "reinit")?;
-
-    {
-        let mut cfg = IPC_LAUNCH_CONFIG.lock()?;
-        *cfg = Some(IpcLaunchConfig {
-            exe_path: exe_path.to_string(),
-            data_path: data_path.to_string(),
-        });
-    }
-
-    let mut mode_guard = BACKEND_MODE.lock()?;
-    *mode_guard = BackendMode::Ipc;
-
-    clear_startup_diagnostics();
-    eprintln!("[MOTIS-GUI] IPC backend initialized (data loading in progress...)");
-    Ok(())
-}
-
-pub fn get_mode() -> BackendMode {
-    *BACKEND_MODE.lock().unwrap()
-}
-
-// Geocode
-pub async fn geocode(query: &str) -> Result<Vec<Match>, Box<dyn std::error::Error>> {
-    eprintln!("[MOTIS-GUI] geocode() called with query: '{}'", query);
-
-    let cmd = format!(r#"{{"cmd":"geocode","query":"{}"}}"#, query.replace('"', "\\\""));
-    eprintln!("[MOTIS-GUI] Sending command: {}", cmd);
-    let data = send_ipc_json_command(&cmd)?;
-    let locations: Vec<LocationResult> = serde_json::from_value(data)?;
-    eprintln!("[MOTIS-GUI] Found {} locations", locations.len());
-    let matches: Vec<Match> = locations.iter().map(Match::from_location_result).collect();
-    Ok(matches)
-}
-
-// Plan route
-pub async fn plan_route(
-    from_lat: f64, from_lon: f64,
-    to_lat: f64, to_lon: f64
-) -> Result<Vec<RouteResult>, Box<dyn std::error::Error>> {
-    eprintln!(
-        "[MOTIS-GUI] plan_route() called: ({}, {}) to ({}, {})",
-        from_lat, from_lon, to_lat, to_lon
-    );
-
-    let cmd = format!(
-        r#"{{"cmd":"plan_route","from_lat":{},"from_lon":{},"to_lat":{},"to_lon":{}}}"#,
-        from_lat, from_lon, to_lat, to_lon
-    );
-    eprintln!("[MOTIS-GUI] Sending command: {}", cmd);
-    let data = send_ipc_json_command(&cmd)?;
-    let routes: Vec<RouteResult> = serde_json::from_value(data)?;
-    eprintln!("[MOTIS-GUI] Found {} routes", routes.len());
-    Ok(routes)
-}
-
-// Reverse geocode
-pub async fn reverse_geocode(lat: f64, lon: f64) -> Result<Option<Match>, Box<dyn std::error::Error>> {
-    let cmd = format!(r#"{{"cmd":"reverse_geocode","lat":{},"lon":{}}}"#, lat, lon);
-    let data = send_ipc_json_command(&cmd)?;
-    if !data.is_null() {
-        let loc: LocationResult = serde_json::from_value(data)?;
-        Ok(Some(Match::from_location_result(&loc)))
-    } else {
-        Ok(None)
-    }
-}
-
-pub fn destroy() {
-    eprintln!("[MOTIS-GUI] destroy() called");
-
-    if let Ok(mut guard) = IPC_PROCESS.lock() {
-        if let Some(mut backend) = guard.take() {
-            backend.terminate("destroy");
-        }
-    }
-
-    if let Ok(mut cfg) = IPC_LAUNCH_CONFIG.lock() {
-        if cfg.is_some() {
-            eprintln!("[MOTIS-GUI] Clearing IPC launch config");
-        }
-        *cfg = None;
-    }
-
-}
-
-// Auto-detect mode based on what's available
-// For USB portable: ONLY use IPC mode, never fall back to server
-pub async fn auto_init(exe_path: Option<&str>, data_path: Option<&str>) -> Result<String, Box<dyn std::error::Error>> {
-    eprintln!("[MOTIS-GUI] auto_init() called");
-    eprintln!("[MOTIS-GUI] exe_path: {:?}", exe_path);
-    eprintln!("[MOTIS-GUI] data_path: {:?}", data_path);
-    
-    // USB PORTABLE MODE: Only use IPC, never fall back to server
-    let exe = match exe_path {
-        Some(path) => path,
-        None => {
-            let message = "No executable path provided for initialization. Next action: set MOTIS_IPC_PATH or launch via RUN.sh.".to_string();
-            remember_startup_diagnostics(message.clone());
-            return Err(message.into());
-        }
-    };
-    let data = match data_path {
-        Some(path) => path,
-        None => {
-            let message = "No data path provided for initialization. Next action: set MOTIS_DATA_PATH or launch via RUN.sh.".to_string();
-            remember_startup_diagnostics(message.clone());
-            return Err(message.into());
-        }
-    };
-    
-    eprintln!("[MOTIS-GUI] Checking if files exist...");
-    let exe_exists = Path::new(exe).exists();
-    let data_exists = Path::new(data).exists();
-    eprintln!("[MOTIS-GUI] exe exists: {}, data exists: {}", exe_exists, data_exists);
-    
-    if !exe_exists {
-        let message = format!(
-            "motis-ipc executable not found at '{}'. Next action: verify the file exists and launch via RUN.sh.",
-            exe
-        );
-        remember_startup_diagnostics(message.clone());
-        return Err(message.into());
-    }
-    
-    if !data_exists {
-        let message = format!(
-            "Data directory not found at '{}'. Next action: provide a valid MOTIS data directory (with config.yml).",
-            data
-        );
-        remember_startup_diagnostics(message.clone());
-        return Err(message.into());
-    }
-    
-    eprintln!("[MOTIS-GUI] Attempting IPC initialization...");
-    match init_ipc(exe, data) {
-        Ok(()) => {
-            eprintln!("[MOTIS-GUI] IPC mode initialized successfully");
-            Ok("IPC mode initialized".to_string())
-        }
-        Err(e) => {
-            let message = format!("Initialization failed: {}", e);
-            eprintln!("[MOTIS-GUI] IPC init failed: {}", message);
-            remember_startup_diagnostics(message.clone());
-            Err(message.into())
-        }
-    }
-}
-
-// ============================================================================
-// Synchronous wrappers for protocol handler
-// These are blocking versions for use in the custom protocol handler
-// ============================================================================
-
-/// Synchronous geocode for protocol handler
-pub fn geocode_sync(query: &str) -> Result<Vec<Match>, Box<dyn std::error::Error>> {
-    let cmd = format!(r#"{{"cmd":"geocode","query":"{}"}}"#, query.replace('"', "\\\""));
-
-    let data = send_ipc_json_command(&cmd)?;
-    let locations: Vec<LocationResult> = serde_json::from_value(data)?;
-    let matches: Vec<Match> = locations
-        .iter()
-        .map(Match::from_location_result)
-        .collect();
-    Ok(matches)
-}
-
-/// Synchronous route planning for protocol handler
-pub fn plan_route_sync(
-    from_lat: f64, from_lon: f64,
-    to_lat: f64, to_lon: f64
-) -> Result<Vec<RouteResult>, Box<dyn std::error::Error>> {
-    let cmd = format!(
-        r#"{{"cmd":"plan_route","from_lat":{},"from_lon":{},"to_lat":{},"to_lon":{}}}"#,
-        from_lat, from_lon, to_lat, to_lon
-    );
-    
-    let data = send_ipc_json_command(&cmd)?;
-    let routes: Vec<RouteResult> = serde_json::from_value(data)?;
-    Ok(routes)
-}
-
-/// Synchronous reverse geocode for protocol handler
-pub fn reverse_geocode_sync(lat: f64, lon: f64) -> Result<Option<Match>, Box<dyn std::error::Error>> {
-    let cmd = format!(r#"{{"cmd":"reverse_geocode","lat":{},"lon":{}}}"#, lat, lon);
-
-    let data = send_ipc_json_command(&cmd)?;
-    if !data.is_null() {
-        let loc: LocationResult = serde_json::from_value(data)?;
-        Ok(Some(Match::from_location_result(&loc)))
-    } else {
-        Ok(None)
-    }
-}
-
-/// Check if IPC backend is initialized
-pub fn is_ipc_initialized() -> bool {
-    IPC_PROCESS.lock()
-        .map(|guard| guard.is_some())
-        .unwrap_or(false)
-}
-
-/// Try to auto-initialize IPC from environment or default paths
-/// Returns true if initialization succeeded
-pub fn try_auto_init() -> bool {
-    if is_ipc_initialized() {
-        return true;
-    }
-    
-    eprintln!("[MOTIS-GUI] Trying auto-initialization...");
-    
-    // Try environment variable for motis-ipc path
-    let ipc_path = std::env::var("MOTIS_IPC_PATH").ok();
-    
-    // Try to find data path
-    let data_path = std::env::var("MOTIS_DATA_PATH").ok()
-        .or_else(|| {
-            // Try default locations
-            let exe_dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
-            let data_dir = exe_dir.join("data");
-            if data_dir.exists() {
-                data_dir.to_str().map(|s| s.to_string())
-            } else {
-                None
-            }
-        });
-    
-    if let (Some(ipc), Some(data)) = (&ipc_path, &data_path) {
-        eprintln!("[MOTIS-GUI] Auto-init with IPC: {}, Data: {}", ipc, data);
-        if let Err(e) = init_ipc(ipc, data) {
-            let message = format!(
-                "Auto-initialization failed with MOTIS_IPC_PATH='{}' and MOTIS_DATA_PATH='{}': {}",
-                ipc, data, e
-            );
-            remember_startup_diagnostics(message.clone());
-            eprintln!("[MOTIS-GUI] Auto-init failed: {}", message);
-            return false;
-        }
-        eprintln!("[MOTIS-GUI] Auto-init succeeded!");
-        clear_startup_diagnostics();
-        return true;
-    }
-    
-    let message = format!(
-        "Auto-initialization could not determine required paths. MOTIS_IPC_PATH={:?}, MOTIS_DATA_PATH={:?}. Next action: launch via RUN.sh or set both environment variables.",
-        ipc_path, data_path
-    );
-    remember_startup_diagnostics(message);
-    eprintln!("[MOTIS-GUI] Auto-init: missing paths. IPC: {:?}, Data: {:?}", ipc_path, data_path);
-    false
-}
-
-/// Synchronous get tile for protocol handler (returns base64 string)
-pub fn get_tile_sync(z: i32, x: i32, y: i32) -> Result<Option<String>, Box<dyn std::error::Error>> {
-    let cmd = format!(r#"{{"cmd":"get_tile","z":{},"x":{},"y":{}}}"#, z, x, y);
-
-    let data = send_ipc_json_command(&cmd)?;
-    if data["found"].as_bool().unwrap_or(false) {
-        let base64_data = data["data_base64"].as_str()
-            .ok_or("Invalid tile data")?;
-        Ok(Some(base64_data.to_string()))
-    } else {
-        Ok(None)
-    }
-}
-
-/// Synchronous get glyph for protocol handler (returns base64 string)
-pub fn get_glyph_sync(path: &str) -> Result<Option<String>, Box<dyn std::error::Error>> {
-    let cmd = serde_json::json!({
-        "cmd": "get_glyph",
-        "path": path
-    }).to_string();
-
-    let data = send_ipc_json_command(&cmd)?;
-
-    if data["found"].as_bool().unwrap_or(false) {
-        let base64_data = data["data_base64"]
-            .as_str()
-            .ok_or("Invalid glyph data")?;
-        Ok(Some(base64_data.to_string()))
-    } else {
-        Ok(None)
-    }
-}
-
-/// Generic synchronous GET endpoint call for protocol passthrough.
-pub fn api_get_sync(path_and_query: &str) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let cmd = serde_json::json!({
-        "cmd": "api_get",
-        "path": path_and_query
-    }).to_string();
-
-    send_ipc_json_command(&cmd)
-}
+mod commands;
+mod ipc;
+mod types;
+
+pub use commands::{
+    api_get_sync, geocode, geocode_sync, get_glyph_sync, get_tile_sync, plan_route,
+    plan_route_sync, reverse_geocode, reverse_geocode_sync,
+};
+pub use ipc::{
+    auto_init, destroy, get_mode, get_startup_diagnostics, init_ipc, is_ipc_initialized,
+    try_auto_init, BackendMode,
+};
+pub use types::{Area, LatLon, LocationResult, Match, MatchArea, RouteLeg, RouteResult, Token};
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::commands::build_geocode_command;
+    use super::ipc::{
+        init_ipc, recover_ipc_backend, send_ipc_json_command, validate_ipc_command,
+        MAX_IPC_COMMAND_BYTES,
+    };
+    #[cfg(unix)]
+    use super::ipc::paths::create_private_temp_dir;
+    use super::destroy;
+    #[cfg(unix)]
+    use std::fs;
+    use std::io;
+    #[cfg(unix)]
+    use std::path::{Path, PathBuf};
+    #[cfg(unix)]
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[cfg(unix)]
+    fn unique_test_dir(prefix: &str) -> PathBuf {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("unix epoch")
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "{}-{}-{}",
+            prefix,
+            std::process::id(),
+            timestamp
+        ))
+    }
+
+    #[cfg(unix)]
+    fn write_recovery_test_backend(script_path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let script = r#"#!/bin/sh
+set -eu
+data_path="${1:-}"
+state_file="$data_path/.recovery_state"
+if [ ! -f "$state_file" ]; then
+  echo "first" > "$state_file"
+  first_run=1
+else
+  first_run=0
+fi
+if IFS= read -r _line; then
+  if [ "$first_run" -eq 1 ]; then
+    exit 42
+  fi
+  printf '{"status":"ok","data":{"recovered":true}}\n'
+fi
+"#;
+
+        fs::write(script_path, script).expect("write fake ipc backend");
+        fs::set_permissions(script_path, fs::Permissions::from_mode(0o755))
+            .expect("chmod fake ipc backend");
+    }
+
+    #[test]
+    fn validate_ipc_command_rejects_newlines() {
+        let err = validate_ipc_command("{\"cmd\":\"geocode\"}\n{\"cmd\":\"api_get\"}")
+            .expect_err("newline command rejected");
+        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+    }
+
+    #[test]
+    fn validate_ipc_command_rejects_oversized_payloads() {
+        let payload = "x".repeat(MAX_IPC_COMMAND_BYTES + 1);
+        let err = validate_ipc_command(&payload).expect_err("oversized command rejected");
+        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+    }
+
+    #[test]
+    fn geocode_command_serializes_control_chars_safely() {
+        let query = "line1\nline2\\\"quoted\"";
+        let cmd = build_geocode_command(query);
+        assert!(!cmd.contains('\n'));
+
+        let parsed: serde_json::Value = serde_json::from_str(&cmd).expect("parse geocode cmd");
+        assert_eq!(parsed["cmd"], "geocode");
+        assert_eq!(parsed["query"], query);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn secure_temp_dir_is_private() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = create_private_temp_dir("motis-ipc-test").expect("create secure temp dir");
+        let mode = std::fs::metadata(&dir).expect("dir metadata").permissions().mode();
+        assert_eq!(mode & 0o077, 0, "group/other permissions must be removed");
+        let _ = std::fs::remove_dir_all(dir);
+    }
 
     #[test]
     fn destroy_is_idempotent_without_backend() {
@@ -840,11 +115,32 @@ mod tests {
 
     #[test]
     fn recovery_without_launch_config_returns_false() {
-        {
-            let mut cfg = IPC_LAUNCH_CONFIG.lock().expect("lock launch config");
-            *cfg = None;
-        }
+        destroy();
         let recovered = recover_ipc_backend("unit-test").expect("recover call");
         assert!(!recovered);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn command_retries_after_ipc_crash_and_recovers() {
+        destroy();
+
+        let root = unique_test_dir("motis-ipc-recovery");
+        let data_dir = root.join("data");
+        let ipc_script = root.join("fake-ipc.sh");
+        fs::create_dir_all(&data_dir).expect("create test data dir");
+        fs::write(data_dir.join("config.yml"), "dataset: test\n").expect("write config.yml");
+        write_recovery_test_backend(&ipc_script);
+
+        let ipc_path = ipc_script.to_str().expect("ipc script path");
+        let data_path = data_dir.to_str().expect("data dir path");
+        init_ipc(ipc_path, data_path).expect("init fake backend");
+
+        let response =
+            send_ipc_json_command(r#"{"cmd":"health_check"}"#).expect("command recovers");
+        assert_eq!(response["recovered"], true);
+
+        destroy();
+        let _ = fs::remove_dir_all(root);
     }
 }

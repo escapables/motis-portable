@@ -114,4 +114,11 @@ glyph_result get_glyph(native_instance& inst, std::string const& path);
 std::optional<std::string> api_get(native_instance& inst,
                                    std::string const& path_and_query);
 
+namespace test_support {
+// Test hook to inject a one-time exception into selected wrappers.
+// Valid hook names: "plan_route", "geocode", "api_get".
+void inject_fault_once(std::string fault_name);
+void clear_fault_injection();
+}  // namespace test_support
+
 }  // namespace motis::native
