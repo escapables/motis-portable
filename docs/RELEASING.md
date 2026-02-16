@@ -29,7 +29,7 @@ Before release:
 ## Release Policy
 
 - Distribution channel: GitHub Releases only.
-- Release gate: remediation/review process finished and CI green on `master`.
+- Release gate: CI green on `master` plus local gate checks completed.
 
 ## Release Checklist
 

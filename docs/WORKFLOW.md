@@ -21,4 +21,4 @@ Shared instructions already live elsewhere and are not duplicated here:
 - Keep section shape: `Session`, `Completed`, `Verification Run`, `Open Risks / Blockers`, `Next Actions`.
 - Keep `Completed` to short session deltas only (max `4` bullets).
 - Keep `Verification Run` concrete (command + result).
-- Keep `Next Actions` to `2-3` bullets; list `docs/PRIMARY_TODO.md` work before `docs/TODO.md` secondary tasks.
+- Keep `Next Actions` to `2-3` bullets with concrete commands or checks.

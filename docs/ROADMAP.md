@@ -1,25 +1,25 @@
 ---
-summary: 'Prioritized roadmap and release-readiness status for the portable IPC-first app.'
+summary: 'Prioritized roadmap for the portable IPC-first app.'
 read_when:
   - Planning upcoming work.
-  - Tracking release readiness before publishing on GitHub.
-  - Deciding what remains before push/tag.
+  - Tracking what ships next.
+  - Deciding near-term implementation priorities.
 ---
 
 # Portable App Roadmap
 
-## Current Status (2026-02-15)
+## Current Status (2026-02-16)
 
-- Core remediation/refactor chain is completed across UI, native IPC/runtime, protocol handling, and CI regression coverage.
-- Release path is GitHub-only and tied to review/remediation completion plus green CI.
-- Remaining release blocker is execution evidence from the full clean-build verification matrix.
+- Latest release: `v2.9.1` published on GitHub Releases.
+- Native runtime remains IPC-first with no localhost fallback.
+- CI includes native, UI, and linux matrix coverage for release paths.
 
 ## Immediate Priority (Next Session)
 
-1. Run clean debug configure/build from a fresh build directory.
-2. Execute all required verification scenarios listed in `docs/PRIMARY_TODO.md` and tracked in `docs/TODO.md`.
-3. Record exact command outcomes and any residual blockers in `docs/HANDOFF.md`.
-4. If all scenarios pass, proceed with push/tag/release checklist from `docs/RELEASING.md`.
+1. Triage new issues/regressions reported after `v2.9.1`.
+2. Prioritize next portable-runtime improvements (startup reliability, bundle UX, offline diagnostics).
+3. Keep release flow healthy by monitoring `master` CI and fixing failures quickly.
+4. Capture only current-session deltas in `docs/HANDOFF.md`.
 
 ## Completed Foundations
 
@@ -32,5 +32,4 @@ read_when:
 ## Guardrails
 
 - Do not reintroduce localhost/server fallback in the desktop runtime.
-- Do not skip clean-build verification evidence before release.
 - Keep docs aligned with actual shipped GitHub release behavior.
