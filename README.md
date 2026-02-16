@@ -25,16 +25,6 @@ This quantifies the code-level migration from upstream server-first workflows to
 - Deployment target: `usb-bundle/` (portable launcher + native binaries + UI assets).
 - This fork is primarily written by OpenAI Codex with human direction/review.
 
-## Repo Build Structure
-
-When building from clone with `./gui-svelte/build-usb.sh`, it compiles/builds:
-- Svelte frontend bundle (`ui/build`)
-- MOTIS core binary (`build/motis` or `build/motis-transit`)
-- IPC bridge binary (`build/native/motis-ipc`)
-- Tauri desktop binary (`gui-svelte/src-tauri/target/release/motis-gui-svelte`)
-
-Then it assembles `usb-bundle/` with launcher/import scripts and runtime files.
-
 ## Quick Start (End User)
 
 ### 1. Get a usb-bundle
@@ -66,6 +56,16 @@ Notes:
 ```bash
 ./RUN.sh
 ```
+
+## Build Structure
+
+When building from clone with `./gui-svelte/build-usb.sh`, it compiles/builds:
+- Svelte frontend bundle (`ui/build`)
+- MOTIS core binary (`build/motis` or `build/motis-transit`)
+- IPC bridge binary (`build/native/motis-ipc`)
+- Tauri desktop binary (`gui-svelte/src-tauri/target/release/motis-gui-svelte`)
+
+Then it assembles `usb-bundle/` with launcher/import scripts and runtime files.
 
 ## usb-bundle Contents
 
