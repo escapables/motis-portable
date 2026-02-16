@@ -2,12 +2,7 @@
 
 # (`escapables/motis-portable`)
 
-Linux-only offline transit desktop app, built around a portable `usb-bundle/` workflow.
-
-Use case:
-- keep app + data on USB/external storage
-- import GTFS + OSM PBF once
-- run offline via `./RUN.sh` on Linux
+Linux-only offline transit desktop app, built around a portable `usb-bundle/` workflow. Forked from [`motis-project/motis`)](https://github.com/motis-project/motis) with significant changes to code and program architecture.
 
 Current divergence against upstream (`motis-project/motis`, merge-base `6eb08ad8`, 2026-02-03; upstream `master` last fetched at `d3aeade3`, 2026-02-15):
 
@@ -16,7 +11,7 @@ Current divergence against upstream (`motis-project/motis`, merge-base `6eb08ad8
 - `2,612 deletions`
 - `+16,226 net lines`
 
-This quantifies the code-level migration from upstream server-first workflows toward the portable USB-first Linux application model used in this fork.
+This quantifies the code-level migration from upstream server-first workflows toward the portable USB-first Linux application model used in this fork. It is presented here to give perspective to the scale of refactoring this project has required.
 
 ## About This Fork
 
@@ -25,7 +20,7 @@ This quantifies the code-level migration from upstream server-first workflows to
 - Deployment target: `usb-bundle/` (portable launcher + native binaries + UI assets).
 - This fork is primarily written by OpenAI Codex with human direction/review.
 
-## Quick Start (End User)
+## Quick Start
 
 ### 1. Get a usb-bundle
 
@@ -39,6 +34,8 @@ git clone https://github.com/escapables/motis-portable.git
 cd motis-portable
 ./gui-svelte/build-usb.sh
 ```
+
+The local build requires an internet connection to satisfy certain dependencies, unless they are already cached (see Troubleshooting section).
 
 ### 2. Import dataset (GTFS + OSM PBF)
 
