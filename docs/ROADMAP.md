@@ -18,7 +18,7 @@ read_when:
 
 1. Triage new issues/regressions reported after `v2.9.1`.
 2. Prioritize next portable-runtime improvements (startup reliability, bundle UX, offline diagnostics).
-3. Keep release flow healthy by monitoring `master` CI and fixing failures quickly.
+3. Keep release flow healthy by monitoring release-triggered CI runs and fixing failures quickly.
 4. Capture only current-session deltas in `docs/HANDOFF.md`.
 
 ## Completed Foundations

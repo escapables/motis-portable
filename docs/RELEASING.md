@@ -29,32 +29,27 @@ Before release:
 ## Release Policy
 
 - Distribution channel: GitHub Releases only.
-- Release gate: CI green on `master` plus local gate checks completed.
+- Release gate: local gate checks completed before tag; CI runs on published release.
 
 ## Release Checklist
 
-1. Confirm latest CI status on `master` is green:
-```bash
-gh run list --workflow CI --branch master --limit 5
-```
-
-2. Run local gate:
+1. Confirm recent local gate run is green (before tag):
 ```bash
 ./bin/test-gate
 ```
 
-3. Build USB bundle:
+2. Build USB bundle:
 ```bash
 ./gui-svelte/build-usb.sh
 ```
 
-4. Smoke check bundle startup:
+3. Smoke check bundle startup:
 ```bash
 cd usb-bundle
 ./RUN.sh
 ```
 
-5. Verify expected bundle artifacts:
+4. Verify expected bundle artifacts:
 - `usb-bundle/motis`
 - `usb-bundle/motis-ipc`
 - `usb-bundle/motis-gui-svelte`
@@ -62,24 +57,24 @@ cd usb-bundle
 - `usb-bundle/RUN.sh`
 - `usb-bundle/motis-import.sh`
 
-6. Commit release metadata:
+5. Commit release metadata:
 ```bash
 git add CHANGELOG.md docs/RELEASING.md docs/HANDOFF.md
 git commit -m "chore: release vX.Y.Z"
 ```
 
-7. Tag:
+6. Tag:
 ```bash
 git tag vX.Y.Z
 ```
 
-8. Push branch + tag (when approved):
+7. Push branch + tag (when approved):
 ```bash
 git push origin master
 git push origin vX.Y.Z
 ```
 
-9. Publish GitHub release (triggers CI release asset upload):
+8. Publish GitHub release (triggers CI release asset upload):
 ```bash
 gh release create vX.Y.Z --verify-tag --title "MOTIS Portable vX.Y.Z" --notes-file /tmp/release-notes.md
 ```

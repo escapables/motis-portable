@@ -4,14 +4,27 @@
 
 This fork is a substantial refactor of upstream `motis`, focused on a Linux-only, portable offline desktop runtime (Tauri + IPC, no browser-localhost dependency in native mode).
 
-Current divergence against upstream (`motis-project/motis` at `2c8e946f`, 2026-02-08):
+Current divergence against upstream (`motis-project/motis`, merge-base `6eb08ad8`, 2026-02-03; upstream `master` last fetched at `d3aeade3`, 2026-02-15):
 
-- `95 files changed`
-- `11,806 insertions`
-- `924 deletions`
-- `+10,882 net lines`
+- `155 files changed`
+- `18,811 insertions`
+- `2,608 deletions`
+- `+16,203 net lines`
 
 This quantifies the code-level migration from upstream server-first workflows toward the portable USB-first Linux application model used in this fork.
+
+## Documentation
+
+- Start with `docs/README.md` for the recommended read order.
+- Session flow and handoff expectations: `docs/WORKFLOW.md`, `docs/HANDOFF.md`.
+- Release checklist and guardrails: `docs/RELEASING.md`.
+- Runtime architecture and bundle contract: `docs/PORTABLE_APP.md`.
+
+List docs from CLI:
+
+```bash
+pnpm run docs:list
+```
 
 ## Supported Runtime Model
 
@@ -43,6 +56,18 @@ This quantifies the code-level migration from upstream server-first workflows to
 
 Package names vary by distro. Install the equivalent `-dev`/`-devel` packages for your distribution.
 
+For Debian/Ubuntu, CI currently uses:
+
+```bash
+sudo apt-get install -y --no-install-recommends \
+  pkg-config \
+  libglib2.0-dev \
+  libgtk-3-dev \
+  libwebkit2gtk-4.1-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev
+```
+
 ## Dev Gate
 
 Run the local gate before handoff:
@@ -55,6 +80,13 @@ Docs-only validation:
 
 ```bash
 ./bin/validate-docs
+```
+
+UI integration checks (recommended before release):
+
+```bash
+pnpm --dir ui run test:integration:smoke
+pnpm --dir ui exec playwright test --workers=1 --grep @regression
 ```
 
 ## USB Build
