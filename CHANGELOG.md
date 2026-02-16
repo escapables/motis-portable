@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- No changes yet.
+_No changes yet._
+
+## [2.9.1] - 2026-02-16
+
+### Testing and CI
+
+- Re-enabled enhanced CI workflow (`tauri-native-tests`, UI regression slice, action pinning, linux target updates) and fixed YAML parser break by quoting Tauri filter args containing `::`.
+- Installed required Tauri Linux build dependencies in CI (`pkg-config`, `libglib2.0-dev`, `libgtk-3-dev`, `libwebkit2gtk-4.1-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`) to fix missing `glib-2.0.pc` errors.
+- Applied CI formatter output to `test/native_ipc_regression_test.cc`, resolving `formatting` job diff-check failure.
+- Updated `tauri-native-tests` to build `ui/build` before cargo tests so `tauri::generate_context!()` no longer fails on missing `frontendDist`.
+- Completed CI stabilization on `master`: run `22035680612` (`10568f1f`) is fully green across `formatting`, `tauri-native-tests`, `ui`, `openapi-validate`, linux matrix, and `docker`.
+- Re-ran local release gate on `2026-02-16`: `./bin/test-gate` passed, Playwright smoke (`1/1`) passed, and Playwright regression (`2/2`) passed.
 
 ## [2.9.0] - 2026-02-15
 
