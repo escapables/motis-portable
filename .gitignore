@@ -35,9 +35,14 @@ gui-svelte/src-tauri/target/
 usb-bundle/
 error.txt
 config2.yml
+/CLAUDE.md
 /AGENTS.md
-docs/TODO.md
-docs/HANDOFF.md
+.agents/
+.claude/
 docs/PRIMARY_TODO.md
+docs/TODO.md
+docs/WORKFLOW.md
+docs/HANDOFF.md
+docs/ARCHIVE.md
 delete-cancelled-runs.zsh
 scripts/delete-failed-cancelled-runs.zsh

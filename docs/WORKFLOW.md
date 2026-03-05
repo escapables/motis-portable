@@ -8,17 +8,32 @@ read_when:
 
 # Workflow
 
-`HANDOFF.md` is a short continuity snapshot for cross-agent pickup.
+`HANDOFF.md` — short continuity snapshot for cross-agent pickup.
 
-Shared instructions already live elsewhere and are not duplicated here:
-- `/pickup` prompt + `~/projects/agent-scripts/kimi/pickup/SKILL.md` (session start flow)
-- local/global `AGENTS.md` (gate/CI/docs behavior)
+## Handoff Contract
 
-## Handoff Contract (Repo-Specific)
+- Max **2 TODO items** per coding session before requesting approval.
+- `HANDOFF.md` under **60 lines** (incl. front matter).
+- Replace stale content; no historical accumulation.
+- Section shape: `Session`, `Completed`, `Verification Run`, `Open Risks / Blockers`, `Next Actions`.
+- `Completed`: short session deltas only (max 4 bullets).
+- `Verification Run`: concrete command + result.
+- `Next Actions`: 2–3 bullets, concrete commands/checks.
 
-- Keep `docs/HANDOFF.md` under `50` total lines (including front matter).
-- Replace stale content; do not accumulate long historical logs.
-- Keep section shape: `Session`, `Completed`, `Verification Run`, `Open Risks / Blockers`, `Next Actions`.
-- Keep `Completed` to short session deltas only (max `4` bullets).
-- Keep `Verification Run` concrete (command + result).
-- Keep `Next Actions` to `2-3` bullets with concrete commands or checks.
+## Milestone Completion
+
+All TODO items DONE → reviewer's turn:
+- Evaluate deliverables
+- Propose next items/milestone in `PRIMARY_TODO.md` + `TODO.md`
+- Update `HANDOFF.md` with new directives
+
+## TODO Lifecycle
+
+Finishing item — collapse to single comment line:
+- `// ### DONE 3. Harden Security`
+- Delete Task/Scope/Done-when block entirely
+- Never renumber
+
+Adding item:
+- Append with next sequential number
+- Never renumber existing

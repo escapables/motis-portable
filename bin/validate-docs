@@ -11,13 +11,23 @@ from pathlib import Path
 DOCS_DIR = Path("docs")
 README_PATH = DOCS_DIR / "README.md"
 TODO_PATH = DOCS_DIR / "TODO.md"
+PRIMARY_TODO_PATH = DOCS_DIR / "PRIMARY_TODO.md"
+ARCHIVE_PATH = DOCS_DIR / "ARCHIVE.md"
 EXCLUDED_DIRS = {"archive", "research"}
+# Local-only agent docs — not version-controlled, skip if absent
+LOCAL_ONLY_DOCS = {"TODO.md", "PRIMARY_TODO.md", "WORKFLOW.md", "HANDOFF.md", "ARCHIVE.md"}
 SUMMARY_PATTERN = re.compile(r"^summary:\s*(.+)$", re.MULTILINE)
 READ_WHEN_HEADER_PATTERN = re.compile(r"^read_when:\s*$", re.MULTILINE)
 READ_WHEN_INLINE_PATTERN = re.compile(r"^read_when:\s*\[(.+?)\]\s*$", re.MULTILINE)
 README_DOC_REF_PATTERN = re.compile(r"`(docs/[A-Za-z0-9_.\-/]+\.md)`")
 TODO_SECTION_PATTERN = re.compile(r"^###\s+(DONE\s+)?(\d+)\.\s+(.+?)\s*$")
+VERSION_HEADING_PATTERN = re.compile(r"^##\s+(?:(?:DONE|NOT DONE)\s+)?v(\d+\.\d+(?:\.\d+)?)\b")
+HANDOFF_PATH = DOCS_DIR / "HANDOFF.md"
+HANDOFF_MAX_LINES = 60
+TODO_MAX_LINES = 60
+PRIMARY_TODO_MAX_LINES = 70
 STRICT_FRONT_MATTER = os.environ.get("STRICT_DOCS_FRONT_MATTER", "0") == "1"
+DONE_VERSION_HEADING = re.compile(r"^##\s+DONE\s+v")
 
 
 def _iter_docs_markdown() -> list[Path]:
@@ -81,6 +91,9 @@ def _has_heading(body: str) -> bool:
         stripped = line.strip()
         if not stripped:
             continue
+        # Skip maintainer-only notes that appear before the heading
+        if stripped.startswith("> **MAINTAINER-ONLY"):
+            continue
         return stripped.startswith("#")
     return False
 
@@ -130,10 +143,12 @@ def _validate_docs_index(files: list[Path]) -> list[str]:
     actual = {
         f"docs/{path.relative_to(DOCS_DIR).as_posix()}"
         for path in files
-        if path.name != "README.md"
+        if path.name != "README.md" and path.name not in LOCAL_ONLY_DOCS
     }
 
-    unknown = sorted(refs - actual)
+    # LOCAL_ONLY_DOCS are expected in the index but not on disk
+    local_refs = {f"docs/{name}" for name in LOCAL_ONLY_DOCS}
+    unknown = sorted(refs - actual - local_refs)
     missing = sorted(actual - refs)
 
     errors: list[str] = []
@@ -150,7 +165,20 @@ def _validate_todo_format(path: Path) -> list[str]:
     _, body = _split_front_matter(content)
     lines = body.splitlines()
 
-    first_non_empty = next((line.strip() for line in lines if line.strip()), "")
+    # Skip maintainer-only notes that appear before the heading
+    first_non_empty = ""
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("> **MAINTAINER-ONLY"):
+            # Skip all lines in the blockquote until we hit a non-blockquote line
+            continue
+        if stripped.startswith("> "):
+            continue
+        first_non_empty = stripped
+        break
+
     if first_non_empty != "# TODO":
         errors.append('TODO.md must start with heading "# TODO"')
 
@@ -169,13 +197,7 @@ def _validate_todo_format(path: Path) -> list[str]:
     if not sections:
         return errors + ["TODO.md requires numbered sections like `### 1. Title`"]
 
-    expected = 1
     for _, number, _, title in sections:
-        if number != expected:
-            errors.append(f"TODO.md section numbering must be sequential; expected {expected}, got {number}")
-            expected = number + 1
-        else:
-            expected += 1
         title_words = re.findall(r"[A-Za-z0-9][A-Za-z0-9+:/-]*", title)
         if not 2 <= len(title_words) <= 4:
             errors.append(
@@ -183,18 +205,22 @@ def _validate_todo_format(path: Path) -> list[str]:
             )
 
     for i, (start_idx, section_number, is_done, _) in enumerate(sections):
+        if is_done:
+            errors.append(
+                f"TODO section {section_number} marked DONE must be collapsed to `// ### DONE {section_number}. title`")
+            continue
         end_idx = sections[i + 1][0] if i + 1 < len(sections) else len(lines)
+        # Also stop block at milestone headings (## vX.X)
+        for j in range(start_idx + 1, end_idx):
+            if VERSION_HEADING_PATTERN.match(lines[j].strip()):
+                end_idx = j
+                break
         raw_block = lines[start_idx + 1 : end_idx]
         block: list[str] = []
         for raw_line in raw_block:
             stripped = raw_line.strip()
-            if is_done and stripped:
-                if not raw_line.startswith("#"):
-                    errors.append(
-                        f"TODO section {section_number} marked DONE must prefix all non-empty lines with '#'"
-                    )
-                    break
-                stripped = raw_line[1:].strip()
+            if stripped.startswith("//"):
+                continue
             block.append(stripped)
 
         task_idx = scope_idx = done_idx = None
@@ -224,8 +250,8 @@ def _validate_todo_format(path: Path) -> list[str]:
             errors.append(f"TODO section {section_number} `Task:` must include a sentence")
         elif task_text[-1] not in ".!?":
             errors.append(f"TODO section {section_number} `Task:` must end with sentence punctuation")
-        elif len(re.findall(r"[.!?]", task_text)) != 1:
-            errors.append(f"TODO section {section_number} `Task:` must be exactly one sentence")
+        elif len(re.findall(r"[.!?]", task_text)) > 2:
+            errors.append(f"TODO section {section_number} `Task:` must be one or two sentences")
 
         scope_lines = block[scope_idx + 1 : done_idx]
         done_lines = block[done_idx + 1 :]
@@ -243,6 +269,82 @@ def _validate_todo_format(path: Path) -> list[str]:
             errors.append(f"TODO section {section_number} Done when block requires at least one bullet")
 
     return errors
+
+
+def _validate_roadmap_format(path: Path, label: str, heading: str) -> list[str]:
+    errors: list[str] = []
+    content = path.read_text(encoding="utf-8")
+    _, body = _split_front_matter(content)
+    lines = body.splitlines()
+
+    first_heading = ""
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        first_heading = stripped
+        break
+
+    if first_heading != heading:
+        errors.append(f'{label} must start with heading "{heading}"')
+
+    versions: list[str] = []
+    for line in lines:
+        match = VERSION_HEADING_PATTERN.match(line.strip())
+        if match:
+            versions.append(match.group(1))
+
+    if not versions:
+        errors.append(f"{label} requires at least one version heading (## vX.X)")
+
+    step_table_pattern = re.compile(r"\|\s*Step\s*\|", re.IGNORECASE)
+    for idx, line in enumerate(lines):
+        if step_table_pattern.search(line):
+            errors.append(
+                f"{label} line {idx + 1}: table must not contain a Step column (use TODO.md for steps)"
+            )
+            break
+
+    return errors
+
+
+def _validate_todo_loc(path: Path) -> list[str]:
+    content = path.read_text(encoding="utf-8")
+    line_count = len(content.splitlines())
+    if line_count > TODO_MAX_LINES:
+        return [f"TODO.md exceeds {TODO_MAX_LINES} lines ({line_count}); remove finished milestones"]
+    return []
+
+
+def _validate_handoff_loc(path: Path) -> list[str]:
+    content = path.read_text(encoding="utf-8")
+    line_count = len(content.splitlines())
+    if line_count > HANDOFF_MAX_LINES:
+        return [f"HANDOFF.md exceeds {HANDOFF_MAX_LINES} lines ({line_count}); trim stale content"]
+    return []
+
+
+def _validate_primary_todo_loc(path: Path) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    content = path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    line_count = len(lines)
+    if line_count <= PRIMARY_TODO_MAX_LINES:
+        return errors, warnings
+
+    has_done_milestones = any(DONE_VERSION_HEADING.match(line.strip()) for line in lines)
+    if has_done_milestones:
+        errors.append(
+            f"PRIMARY_TODO.md exceeds {PRIMARY_TODO_MAX_LINES} lines ({line_count}); "
+            "archive completed milestones to docs/ARCHIVE.md"
+        )
+    else:
+        warnings.append(
+            f"PRIMARY_TODO.md exceeds {PRIMARY_TODO_MAX_LINES} lines ({line_count}); "
+            "consider splitting large milestones"
+        )
+    return errors, warnings
 
 
 def main() -> int:
@@ -264,6 +366,16 @@ def main() -> int:
         errors, warnings = _validate_doc(path)
         if path == TODO_PATH:
             errors.extend(_validate_todo_format(path))
+            errors.extend(_validate_todo_loc(path))
+        if path == HANDOFF_PATH:
+            errors.extend(_validate_handoff_loc(path))
+        if path == PRIMARY_TODO_PATH:
+            errors.extend(_validate_roadmap_format(path, "PRIMARY_TODO.md", "# Roadmap"))
+            loc_errors, loc_warnings = _validate_primary_todo_loc(path)
+            errors.extend(loc_errors)
+            warnings.extend(loc_warnings)
+        if path == ARCHIVE_PATH:
+            errors.extend(_validate_roadmap_format(path, "ARCHIVE.md", "# Archived Milestones"))
         if errors:
             failed = True
             print(f"  FAIL {rel}: {', '.join(errors)}")
