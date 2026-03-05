@@ -10,14 +10,13 @@ read_when:
 ## Read Order
 
 1. `README.md` (this file)
-2. `docs/ROADMAP.md`
+2. `docs/PRIMARY_TODO.md`
 3. `docs/PORTABLE_APP.md`
 4. `docs/RELEASING.md`
 5. `docs/WORKFLOW.md`
 6. `docs/HANDOFF.md`
 7. `docs/TODO.md`
-8. `docs/PRIMARY_TODO.md`
-9. `docs/linux-dev-setup.md`
+8. `docs/linux-dev-setup.md`
 10. `docs/elevation-setup.md`
 11. `docs/scripting.md`
 12. `docs/STYLE.md`
@@ -27,10 +26,9 @@ read_when:
 ## Fork-specific docs
 
 - `docs/PORTABLE_APP.md`: architecture and deployment model for the USB/offline IPC-first app.
-- `docs/ROADMAP.md`: focused backlog and completed milestones.
+- `docs/PRIMARY_TODO.md`: versioned milestone roadmap and completed foundations.
 - `docs/HANDOFF.md`: ephemeral session handoff state for cross-agent pickup.
 - `docs/TODO.md`: lightweight execution checklist template for active work.
-- `docs/PRIMARY_TODO.md`: template for large multi-step workstreams.
 - `docs/WORKFLOW.md`: pickup/handoff process and handoff quality expectations.
 - `docs/RELEASING.md`: release checklist, changelog flow, and GitHub release guardrails.
 - `docs/mislabel-inventory.md`: reproducible mislabel catalog and normalization pass status.
